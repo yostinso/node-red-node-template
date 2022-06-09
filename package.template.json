@@ -1,0 +1,53 @@
+{
+    "name": `${fullPackageName}`,
+    "version": "0.0.1",
+    "description": "A node to do some stuff",
+    "author": `${githubUsername}`,
+    "homepage": `https://github.com/${githubUsername}/${fullPackageName}`,
+    "license": "Apache-2.0",
+    "maintainers": [
+        `${maintainer}`
+    ],
+    "repository": {
+        "type": "git",
+        "url": `https://github.com/${githubUsername}/${fullPackageName}.git`
+    },
+    "bugs": {
+        "url": `https://github.com/${githubUsername}/${fullPackageName}/issues`
+    },
+    "keywords": [
+        "node-red",
+        "node-red-contrib",
+        "contrib",
+        "smart-home",
+        "home-automation"
+    ],
+    "node-red": {
+        "nodes": {
+            [`${nodeName}`]: `dist/${nodeName}.js`
+        }
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "compile:ts": "tsc",
+        "compile:compilers": "tsc --project ./compile",
+        "compile:views_ts": `tsc --project ./${packageName}/views`,
+        "compile:views": `node ./compile/js/compileViews.js --outDir dist --locales ./${packageName}/locales ./${packageName}/views`,
+        "compile:clean": "rm -r dist"
+    },
+    "devDependencies": {
+        "@types/async": "^3.2.13",
+        "@types/jest": "^27.5.1",
+        "@types/node": "^17.0.35",
+        "@types/node-red": "^1.2.1",
+        "jest": "^28.1.0",
+        "node-red": "^2.2.2",
+        "ts-jest": "^28.0.2",
+        "typescript": "^4.6.4"
+    },
+    "dependencies": {
+        "async": "^3.2.3"
+    }
+}
