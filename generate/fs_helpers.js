@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { resolve } = require("path");
 
 
 function writeFile(filename, data) {
@@ -25,10 +26,26 @@ function mkdir(path, options = {}) {
     });
 }
 
-function writePackageJson(pkgJson) {
-    return writeFile("package.json", JSON.stringify(pkgJson, null, 4));
+
+function fileExists(filename) {
+    return new Promise((resolve) => {
+        fs.stat(filename, (err) => {
+            err ? resolve(false) : resolve(true);
+        })
+    })
+}
+
+function copyIfNotExists(src, dest) {
+    return new Promise((resolve, reject) => {
+        return fileExists(dest).then((exists) => {
+            if (exists) { return resolve(false); }
+            fs.copyFile(src, dest, (err) => {
+                err ? reject(err) : resolve(true);
+            });
+        })
+    })
 }
 
 module.exports = {
-    writeFile, readFile, writePackageJson, mkdir
+    writeFile, readFile, mkdir, copyIfNotExists
 }

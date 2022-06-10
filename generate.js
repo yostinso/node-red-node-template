@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 const { spawn } = require("child_process");
-const { readFile, writeFile, mkdir, writePackageJson } = require("./generate/fs_helpers");
-const { readTemplates, templateReplace } = require("./generate/template_helpers");
+const { readFile, mkdir, copyIfNotExists } = require("./generate/fs_helpers");
+const { readPackageTemplates, readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson } = require("./generate/template_helpers");
 const { parseArgs } = require("./generate/parse_args");
-const { fstat } = require("fs");
 
 function main() {
     let [ command, ...argv ] = process.argv.slice(2);
@@ -54,55 +53,35 @@ function generatePkgJson(packageName, maintainer, githubUsername, fullPackageNam
     console.log("Generating package.json...");
     githubUsername ||= maintainer.match(/<([^>]+)@[^>]*>/)[1];
     fullPackageName ||= `node-red-contrib-${packageName}`;
-    console.log({
-        packageName, maintainer, githubUsername, fullPackageName
-    });
 
-    return readFile("package.template.json")
-    .then((template) => {
-        return (() => {
-            let pkgJson;
-            eval("pkgJson = " + template);
-            return pkgJson;
-        })();
-    }).then((pkgJson) => {
-        return writePackageJson(pkgJson);
-    }).then(() => {
-        console.log("Done.");
-    });
+    return readPackageTemplates()
+    .then((templates) => templateReplaceAll(templates, { packageName, maintainer, githubUsername, fullPackageName }))
+    .then((generated) => templateWriteAll(generated))
+    .then(() => console.log("Done"));
 }
 
 function _generateNodeViews(packageName, nodeName) {
-    return mkdir(`${nodeName}/views`, { recursive: true })
-    .then(() => mkdir(`${nodeName}/locales`, { recursive: true }))
+    const nodeClass = nodeName.replaceAll(/(?:^|-)([a-z])/g, (m, letter) => letter.toUpperCase());
+
+    return mkdir(`${packageName}/views`, { recursive: true })
     .then(() => {
-        return readTemplates();
-    }).then((templates) => {
-        return Object.entries(templates).reduce((tmpl, [name, template]) => {
-            const k = templateReplace(name, { nodeName, packageName }),
-                  v = templateReplace(template, { nodeName, packageName });
-            return  { ...tmpl, [k]: v };
-        }, {});
-    }).then((generated) => {
-        return Promise.all(
-            Object.entries(generated).map(([filename, content]) => {
-                return writeFile(filename, content);
-            })
-        );
-    });
+        return copyIfNotExists("template/views/tsconfig.json", `${packageName}/views/tsconfig.json`).then((copied) => {
+            copied ? console.log("Copied views/tsconfig.json") : console.log("views/tsconfig.json already exists");
+        });
+    })
+    .then(() => mkdir(`${packageName}/locales`, { recursive: true }))
+    .then(() => readNodeTemplates())
+    .then((templates) => templateReplaceAll(templates, { nodeName, packageName, nodeClass }))
+    .then((generated) => templateWriteAll(generated));
 }
 
 function generateNode(nodeName, packageName) {
-    if (!nodeName) {
-        return Promise.reject("Must provide a node name!");
-    }
+    if (!nodeName) { return Promise.reject("Must provide a node name!"); }
+
     return readFile("package.json")
-    .catch((err) => {
-        return Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err);
-    })
-    .then((json) => {
-        return JSON.parse(json);
-    }).then((pkgJson) => {
+    .catch((err) => Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err))
+    .then((json) => JSON.parse(json))
+    .then((pkgJson) => {
         packageName ||= pkgJson.packageName;
         const nodeRed = pkgJson["node-red"] || {};
         nodeRed.nodes ||= {};
@@ -112,10 +91,9 @@ function generateNode(nodeName, packageName) {
         };
         pkgJson["node-red"] = nodeRed;
         return pkgJson;
-    }).then((pkgJson) => {
-        return writePackageJson(pkgJson);
-    }).then(() => {
-        return _generateNodeViews(packageName, nodeName);
-    });
-    // TODO: Generate node.ts, node.html, locale, icon
+    })
+    .then((pkgJson) => writeJson("package.json", pkgJson))
+    .then(() => _generateNodeViews(packageName, nodeName))
+    .then(() => console.log("Done"));
+    // TODO: Generate icon
 }

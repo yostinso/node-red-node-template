@@ -1,8 +1,11 @@
 import { RED } from "node-red-es6-shim";
 import { NodeConfig } from "node-red-es6-shim";
+import { ${nodeClass}ExtendedConfig } from "../${packageName}-${nodeName}";
+
+type Config = NodeConfig & { defaults: ${nodeClass}ExtendedConfig };
 
 (() => {
-    const config: NodeConfig = {
+    const config: Config = {
         category: "Unknown",
         color: "#b7b7b7",
         defaults: {
@@ -23,5 +26,5 @@ import { NodeConfig } from "node-red-es6-shim";
         }
     };
 
-    RED.nodes.registerType("${packageName}-${nodeName}");
+    RED.nodes.registerType("${packageName}-${nodeName}", config);
 })();
