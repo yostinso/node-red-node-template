@@ -3,7 +3,7 @@ const { readFile, writeFile } = require("./fs_helpers");
 const NODE_TS_TEMPLATE = "./template/node.ts";
 const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts";
 const NODE_HTML_TEMPLATE = "./template/views/node.html";
-const LOCALE_TEMPLATE = "./template/locales/locale.template.json";
+const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json";
 const ICONS_FOLDER = "./template/icons";
 
 function readNodeTemplates() { 
@@ -29,7 +29,7 @@ function readNodeTemplates() {
         return readFile(LOCALE_TEMPLATE).then((localeTemplate) => {
             return {
                 ...t, 
-                "${packageName}/locales/${packageName}-${nodeName}.json": localeTemplate
+                "${packageName}/locales/en-US/${packageName}-${nodeName}.json": localeTemplate
             };
         });
     });

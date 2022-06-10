@@ -69,7 +69,7 @@ function _generateNodeViews(packageName, nodeName) {
             copied ? console.log("Copied views/tsconfig.json") : console.log("views/tsconfig.json already exists");
         });
     })
-    .then(() => mkdir(`${packageName}/locales`, { recursive: true }))
+    .then(() => mkdir(`${packageName}/locales/en-US`, { recursive: true }))
     .then(() => readNodeTemplates())
     .then((templates) => templateReplaceAll(templates, { nodeName, packageName, nodeClass }))
     .then((generated) => templateWriteAll(generated));
