@@ -1,5 +1,6 @@
 {
     "name": `${fullPackageName}`,
+    "packageName": `${packageName}`,
     "version": "0.0.1",
     "description": "A node to do some stuff",
     "author": `${githubUsername}`,
@@ -23,9 +24,7 @@
         "home-automation"
     ],
     "node-red": {
-        "nodes": {
-            [`${nodeName}`]: `dist/${nodeName}.js`
-        }
+        "nodes": {}
     },
     "publishConfig": {
         "access": "public"
@@ -45,7 +44,8 @@
         "jest": "^28.1.0",
         "node-red": "^2.2.2",
         "ts-jest": "^28.0.2",
-        "typescript": "^4.6.4"
+        "typescript": "^4.6.4",
+        "node-red-es6-shim": "^1.0.0"
     },
     "dependencies": {
         "async": "^3.2.3"

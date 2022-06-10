@@ -1,7 +1,10 @@
 {
     [`${packageName}-${nodeName}`]: {
         "node": {
-            "input-name": "My node name"
+            "input-name": "My node name",
+            "label": "Some Node",
+            "input": "Input",
+            "output": "Output"
         }
     }
 }

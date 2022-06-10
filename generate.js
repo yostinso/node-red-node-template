@@ -29,30 +29,52 @@ function main() {
             [ subcommand, ...argv ] = argv;
             switch (subcommand) {
                 case "packageJson":
-                    let {
-                        name: packageName,
-                        maintainer, githubUsername,
-                        fullPackageName
-                    } = parseArgs(argv);
-                    return generatePkgJson(packageName, maintainer, githubUsername, fullPackageName);
-                case "generateNode":
-                    let { name: nodeName, }
+                    {
+                        let {
+                            name: packageName,
+                            maintainer, githubUsername,
+                            fullPackageName
+                        } = parseArgs(argv);
+                        return generatePkgJson(packageName, maintainer, githubUsername, fullPackageName);
+                    }
+                case "node":
+                    {
+                        let { name: nodeName, packageName } = parseArgs(argv);
+                        return generateNode(nodeName, packageName);
+                    }
+                default:
+                    console.log("Invalid subcommand ", subcommand);
+                    break;
             }
+            break;
+        default:
+            console.log("Invalid command ", command);
             break;
     }
     return Promise.resolve();
 }
 
 main().catch((err) => {
-    if (err) { console.err(err); }
+    if (err) { console.error(err); }
 });
+
+function _writePackageJson(pkgJson) {
+    return new Promise((resolve, reject) => {
+        fs.writeFile(
+            "package.json",
+            JSON.stringify(pkgJson, null, 4),
+            (err) => {
+                if (err) { reject(err) } else { resolve(); }
+            }
+        );
+    });
+}
 
 function generatePkgJson(packageName, maintainer, githubUsername, fullPackageName) {
     if (!packageName || !maintainer) {
         console.warn(`
         You must provide a name and maintainer!
-        e.g. ./${process.argv[0]} ${process.argv[1]} mynode "My Name <email@example.com>"
-    `
+        e.g. ./${process.argv[0]} ${process.argv[1]} mynode "My Name <email@example.com>"\n`
         );
         return Promise.reject();
     }
@@ -69,49 +91,45 @@ function generatePkgJson(packageName, maintainer, githubUsername, fullPackageNam
             if (err) { reject(err); } else { resolve(data); }
         });
     }).then((template) => {
-        let pkgJson;
-        eval("pkgJson=" + template);
-        return pkgJson;
+        return (() => {
+            eval("return " + template);
+        })();
     }).then((pkgJson) => {
-        return new Promise((resolve, reject) => {
-            fs.writeFile(
-                "package.json",
-                JSON.stringify(pkgJson, null, 4),
-                (err) => {
-                    if (err) { reject(err) } else { resolve(); }
-                }
-            );
-        });
+        return _writePackageJson(pkgJson);
     }).then(() => {
         console.log("Done.");
     });
 }
 
-function generateNode() {
-
-}
-
-/*
-console.log("Generating package.json...");
-generatePkgJson().then(() => {
-    console.log("Done");
-}).then(() => {
-    console.log("Installing modules");
-    console.log("vvvvvvvvvvvvvvvvvvvvvvvvvv");
+function generateNode(nodeName, packageName) {
+    if (!nodeName) {
+        return Promise.reject("Must provide a node name!");
+    }
     return new Promise((resolve, reject) => {
-        spawn("npm", ["i", "--color", "always"], {
-            stdio: "inherit"
-        }).on("close", (code) => {
-            if (code == 0) { resolve(); } else { reject(code); }
+        fs.readFile("package.json", (err, data) => {
+            if (err) {
+                if (err.code == "ENOENT") {
+                    return reject("Must generate package.json first!")
+                } else {
+                    return reject(err);
+                }
+            }
+            resolve(data);
         });
-    }).then(() => {
-        console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    }).then((json) => {
+        return JSON.parse(json);
+    }).then((pkgJson) => {
+        packageName ||= pkgJson.packageName;
+        const nodeRed = pkgJson["node-red"] || {};
+        nodeRed.nodes ||= {};
+        nodeRed.nodes = {
+            ...nodeRed.nodes,
+            [`${packageName}-${nodeName}`]: `dist/${packageName}-${nodeName}.js`
+        };
+        pkgJson["node-red"] = nodeRed;
+        return pkgJson;
+    }).then((pkgJson) => {
+        return _writePackageJson(pkgJson);
     });
-})
-.then(() => {
-    generateNode(nodeName)
-})
-.then(() => {
-    console.log("Done");
-});
-*/
+    // TODO: Generate node.ts, node.html, locale, icon
+}
