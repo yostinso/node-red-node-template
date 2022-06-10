@@ -1,25 +1,9 @@
 #!/usr/bin/env node
-const fs = require("fs");
 const { spawn } = require("child_process");
-const { generateKeyPairSync } = require("crypto");
-
-function parseArgs(args=[]) {
-    let flag;
-    let result = {
-        others: []
-    };
-    args.forEach((arg) => {
-        if (flag === undefined && arg[0] == "-") {
-            flag = arg.match(/^-+(.+)/)[1];
-        } else if (flag !== undefined) {
-            result[flag] = arg;
-            flag = undefined;
-        } else {
-            result.others.push(arg);
-        }
-    });
-    return result;
-}
+const { readFile, writeFile, mkdir, writePackageJson } = require("./generate/fs_helpers");
+const { readTemplates, templateReplace } = require("./generate/template_helpers");
+const { parseArgs } = require("./generate/parse_args");
+const { fstat } = require("fs");
 
 function main() {
     let [ command, ...argv ] = process.argv.slice(2);
@@ -58,18 +42,6 @@ main().catch((err) => {
     if (err) { console.error(err); }
 });
 
-function _writePackageJson(pkgJson) {
-    return new Promise((resolve, reject) => {
-        fs.writeFile(
-            "package.json",
-            JSON.stringify(pkgJson, null, 4),
-            (err) => {
-                if (err) { reject(err) } else { resolve(); }
-            }
-        );
-    });
-}
-
 function generatePkgJson(packageName, maintainer, githubUsername, fullPackageName) {
     if (!packageName || !maintainer) {
         console.warn(`
@@ -86,18 +58,37 @@ function generatePkgJson(packageName, maintainer, githubUsername, fullPackageNam
         packageName, maintainer, githubUsername, fullPackageName
     });
 
-    return new Promise((resolve, reject) => {
-        fs.readFile("package.template.json", "utf8", (err, data) => {
-            if (err) { reject(err); } else { resolve(data); }
-        });
-    }).then((template) => {
+    return readFile("package.template.json")
+    .then((template) => {
         return (() => {
-            eval("return " + template);
+            let pkgJson;
+            eval("pkgJson = " + template);
+            return pkgJson;
         })();
     }).then((pkgJson) => {
-        return _writePackageJson(pkgJson);
+        return writePackageJson(pkgJson);
     }).then(() => {
         console.log("Done.");
+    });
+}
+
+function _generateNodeViews(packageName, nodeName) {
+    return mkdir(`${nodeName}/views`, { recursive: true })
+    .then(() => mkdir(`${nodeName}/locales`, { recursive: true }))
+    .then(() => {
+        return readTemplates();
+    }).then((templates) => {
+        return Object.entries(templates).reduce((tmpl, [name, template]) => {
+            const k = templateReplace(name, { nodeName, packageName }),
+                  v = templateReplace(template, { nodeName, packageName });
+            return  { ...tmpl, [k]: v };
+        }, {});
+    }).then((generated) => {
+        return Promise.all(
+            Object.entries(generated).map(([filename, content]) => {
+                return writeFile(filename, content);
+            })
+        );
     });
 }
 
@@ -105,18 +96,11 @@ function generateNode(nodeName, packageName) {
     if (!nodeName) {
         return Promise.reject("Must provide a node name!");
     }
-    return new Promise((resolve, reject) => {
-        fs.readFile("package.json", (err, data) => {
-            if (err) {
-                if (err.code == "ENOENT") {
-                    return reject("Must generate package.json first!")
-                } else {
-                    return reject(err);
-                }
-            }
-            resolve(data);
-        });
-    }).then((json) => {
+    return readFile("package.json")
+    .catch((err) => {
+        return Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err);
+    })
+    .then((json) => {
         return JSON.parse(json);
     }).then((pkgJson) => {
         packageName ||= pkgJson.packageName;
@@ -129,7 +113,9 @@ function generateNode(nodeName, packageName) {
         pkgJson["node-red"] = nodeRed;
         return pkgJson;
     }).then((pkgJson) => {
-        return _writePackageJson(pkgJson);
+        return writePackageJson(pkgJson);
+    }).then(() => {
+        return _generateNodeViews(packageName, nodeName);
     });
     // TODO: Generate node.ts, node.html, locale, icon
 }

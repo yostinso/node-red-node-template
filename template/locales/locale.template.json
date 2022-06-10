@@ -1,5 +1,5 @@
 {
-    [`${packageName}-${nodeName}`]: {
+    "${packageName}-${nodeName}": {
         "node": {
             "input-name": "My node name",
             "label": "Some Node",
