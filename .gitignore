@@ -2,8 +2,8 @@
 /package-lock.json
 /yarn-lock.json
 /npm-debug.log
-coverage/**
-dist/
-compile/js/
-package.json
-tsconfig.json
+/coverage/**
+/dist/
+/compile/js/
+/package.json
+/tsconfig.json

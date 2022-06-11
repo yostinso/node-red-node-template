@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node 14",
+
+  "typeAcquisition": {
+
+  },
+  "compilerOptions": {
+    "lib": ["es2020"],
+    "module": "es2015",
+    "target": "es2015",
+    "moduleResolution": "node",
+
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    "baseUrl": ".",
+    "paths": {
+      "node-red-es6-shim": [ "../../node_modules/node-red-es6-shim/dist/ES6Node" ]
+    },
+    "rootDir": "..",
+    "experimentalDecorators": true,
+    "outDir": ".."
+  },
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "compile"
+  ]
+}
