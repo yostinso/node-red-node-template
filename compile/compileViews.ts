@@ -68,7 +68,7 @@ folders.forEach((folder) => {
                     Object.entries(relatedByType).map(async ([type, subfile]) => {
                         await fs.readFile(subfile).then(async (content) => {
                             let scriptTag = type == "js" ?
-                                `<script type="text/javascript">\n` : 
+                                `<script type="module">\n` : 
                                 `<script type="text/x-red" data-template-name="${baseName}">\n`;
                             await fh.write(scriptTag).then(() => {
                                 return fh.write(indent(content));

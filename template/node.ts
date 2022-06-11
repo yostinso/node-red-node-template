@@ -1,12 +1,16 @@
-import NodeRedNode from "node-red-es6-shim";
+import NodeRedNode, { EditorConfig } from "node-red-es6-shim";
 import * as NodeRed from "node-red";
 import util from "util";
 
-export type ${nodeClass}ExtendedConfig = {
-    name: string,
+type Defaults = EditorConfig["defaults"];
+
+export interface ${nodeClass}Defaults extends Defaults {
+    name: { value: string }
 }
-export interface ${nodeClass}Config extends NodeRed.NodeDef, ${nodeClass}ExtendedConfig {
+type ExtendedConfigKeys = {
+    [K in keyof ${nodeClass}Defaults]: ${nodeClass}Defaults[K]["value"];
 }
+export interface ${nodeClass}Config extends NodeRed.NodeDef, ExtendedConfigKeys {}
 
 export class ${nodeClass} extends NodeRedNode {
     private readonly RED: NodeRed.NodeAPI;

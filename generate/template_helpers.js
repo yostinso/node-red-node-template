@@ -57,8 +57,8 @@ function readPackageTemplates() {
 function templateReplace(template, object) {
     let result = template;
     Object.entries(object).forEach(([k, v]) => {
-        const repl = "${" + k + "}";
-        result = result.replaceAll(repl, v);
+        const repl = new RegExp('\\$\\{' + k + '\\}', "g")
+        result = result.replace(repl, v);
     });
     return result;
 }
