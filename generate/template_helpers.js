@@ -1,4 +1,4 @@
-const { readFile, writeFile } = require("./fs_helpers");
+const { readFile, writeFile } = require("fs").promises;
 
 const NODE_TS_TEMPLATE = "./template/node.ts";
 const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts";
@@ -7,26 +7,26 @@ const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json";
 const ICONS_FOLDER = "./template/icons";
 
 function readNodeTemplates() { 
-    return readFile(NODE_TS_TEMPLATE).then((nodeTsTemplate) => {
+    return readFile(NODE_TS_TEMPLATE, "utf8").then((nodeTsTemplate) => {
         return {
             "${packageName}/${packageName}-${nodeName}.ts": nodeTsTemplate
         };
     }).then((t) => {
-        return readFile(NODE_VIEW_TS_TEMPLATE).then((nodeViewTsTemplate) => {
+        return readFile(NODE_VIEW_TS_TEMPLATE, "utf8").then((nodeViewTsTemplate) => {
             return {
                 ...t,
                 "${packageName}/views/${packageName}-${nodeName}.ts": nodeViewTsTemplate
             };
         });
     }).then((t) => {
-        return readFile(NODE_HTML_TEMPLATE).then((nodeHtmlTemplate) => {
+        return readFile(NODE_HTML_TEMPLATE, "utf8").then((nodeHtmlTemplate) => {
             return {
                 ...t,
                 "${packageName}/views/${packageName}-${nodeName}.html": nodeHtmlTemplate
             };
         });
     }).then((t) => {
-        return readFile(LOCALE_TEMPLATE).then((localeTemplate) => {
+        return readFile(LOCALE_TEMPLATE, "utf8").then((localeTemplate) => {
             return {
                 ...t, 
                 "${packageName}/locales/en-US/${packageName}-${nodeName}.json": localeTemplate
@@ -39,12 +39,12 @@ const PACKAGE_JSON_TEMPLATE = "./package.template.json";
 const TSCONFIG_JSON_TEMPLATE = "./tsconfig.template.json";
 
 function readPackageTemplates() {
-    return readFile(PACKAGE_JSON_TEMPLATE).then((packageJsonTemplate) => {
+    return readFile(PACKAGE_JSON_TEMPLATE, "utf8").then((packageJsonTemplate) => {
         return {
             "package.json": packageJsonTemplate
         };
     }).then((t) => {
-        return readFile(TSCONFIG_JSON_TEMPLATE).then((tsconfigJsonTemplate) => {
+        return readFile(TSCONFIG_JSON_TEMPLATE, "utf8").then((tsconfigJsonTemplate) => {
             return {
                 ...t,
                 "tsconfig.json": tsconfigJsonTemplate

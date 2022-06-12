@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 const { spawn } = require("child_process");
-const { readFile, mkdir, copyIfNotExists } = require("./generate/fs_helpers");
-const { readPackageTemplates, readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson } = require("./generate/template_helpers");
+const { readFile, mkdir } = require("fs").promises;
+const { copyIfNotExists } = require("./generate/fs_helpers");
+const { readPackageTemplates, readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } = require("./generate/template_helpers");
 const { parseArgs } = require("./generate/parse_args");
 
 function printHelp() {
@@ -112,9 +113,11 @@ function _generateNodeViews(packageName, nodeName) {
 
     return mkdir(`${packageName}/views`, { recursive: true })
     .then(() => {
-        return copyIfNotExists("template/views/tsconfig.json", `${packageName}/views/tsconfig.json`).then((copied) => {
-            copied ? console.log("Copied views/tsconfig.json") : console.log("views/tsconfig.json already exists");
-        });
+        return Promise.all([
+            copyIfNotExists("template/views/tsconfig.json", `${packageName}/views/tsconfig.json`).then((copied) => {
+                copied ? console.log("Copied views/tsconfig.json") : console.log("views/tsconfig.json already exists");
+            })
+        ])
     })
     .then(() => mkdir(`${packageName}/locales/en-US`, { recursive: true }))
     .then(() => readNodeTemplates())
@@ -125,7 +128,7 @@ function _generateNodeViews(packageName, nodeName) {
 function generateNode(nodeName, packageName) {
     if (!nodeName) { return Promise.reject("Must provide a node name!"); }
 
-    return readFile("package.json")
+    return readFile("package.json", "utf8")
     .catch((err) => Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err))
     .then((json) => JSON.parse(json))
     .then((pkgJson) => {
