@@ -112,12 +112,16 @@ function _generateNodeViews(packageName, nodeName) {
     const nodeClass = nodeName.replace(/(?:^|-)([a-z])/g, (m, letter) => letter.toUpperCase());
 
     return mkdir(`${packageName}/views`, { recursive: true })
+    .then(() => mkdir(`${packageName}/icons`, { recursive: true }))
     .then(() => {
         return Promise.all([
-            copyIfNotExists("template/views/tsconfig.json", `${packageName}/views/tsconfig.json`).then((copied) => {
-                copied ? console.log("Copied views/tsconfig.json") : console.log("views/tsconfig.json already exists");
-            })
-        ])
+            copyIfNotExists("template/views/tsconfig.json", `${packageName}/views/tsconfig.json`).then(([copied, src, dest]) => {
+                copied ? console.log(`Copied ${src} to ${dest}`) : console.log(`${dest} already exists`);
+            }),
+            copyIfNotExists(NODE_ICON, `${packageName}/icons/`).then(([copied, src, dest]) => {
+                copied ? console.log(`Copied ${src} to ${dest}`) : console.log(`${dest} already exists`);
+            }),
+        ]);
     })
     .then(() => mkdir(`${packageName}/locales/en-US`, { recursive: true }))
     .then(() => readNodeTemplates())
@@ -145,5 +149,4 @@ function generateNode(nodeName, packageName) {
     .then((pkgJson) => writeJson("package.json", pkgJson))
     .then(() => _generateNodeViews(packageName, nodeName))
     .then(() => console.log("Done"));
-    // TODO: Generate icon
 }

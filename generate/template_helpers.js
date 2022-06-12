@@ -5,6 +5,7 @@ const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts";
 const NODE_HTML_TEMPLATE = "./template/views/node.html";
 const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json";
 const ICONS_FOLDER = "./template/icons";
+const NODE_ICON = `${ICONS_FOLDER}/home.svg`;
 
 function readNodeTemplates() { 
     return readFile(NODE_TS_TEMPLATE, "utf8").then((nodeTsTemplate) => {
@@ -85,5 +86,6 @@ function writeJson(filename, json) {
 }
 
 module.exports = {
-    readNodeTemplates, readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson
+    readNodeTemplates, readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson,
+    NODE_ICON
 };

@@ -1,18 +1,17 @@
 const fs = require("fs");
-
-function fileExists(filename) {
-    return fs.promises.stat(filename).then(() => true).catch(() => false);
-}
+const path = require("path");
 
 function copyIfNotExists(src, dest) {
-    return new Promise((resolve, reject) => {
-        return fileExists(dest).then((exists) => {
-            if (exists) { return resolve(false); }
-            fs.copyFile(src, dest, (err) => {
-                err ? reject(err) : resolve(true);
-            });
-        })
-    })
+    return fs.promises.opendir(dest).then((dir) => {
+        // Need to figure out full path
+        dest = path.join(dir.path, path.basename(src));
+    }).catch(() => true)
+    .then(() => fs.promises.copyFile(src, dest, fs.constants.COPYFILE_EXCL).then(() => true).catch((err) => {
+        if (err.code == "EEXIST") { return false; }
+        return Promise.reject(err);
+    })).then((copied) => {
+        return [ copied, src, dest ];
+    });
 }
 
 module.exports = {

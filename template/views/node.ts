@@ -12,7 +12,7 @@ type Config = EditorConfig & { defaults: ${nodeClass}Defaults };
         defaults: {
             name: { value: "My Node" }
         },
-        icon: "home.png",
+        icon: "home.svg",
         align: "left",
         inputs: 1,
         outputs: 1,
