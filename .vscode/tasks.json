@@ -59,6 +59,20 @@
             "problemMatcher": [],
             "label": "Clean",
             "detail": "rm -r dist"
+        },
+        {
+            "label": "Install for debug",
+            "type": "shell",
+            "command": "cd /data && npm i /local_node_modules/node-red-contrib-development/",
+            "detail": "Install this module into the included node-red for debugging.",
+            "problemMatcher": {
+                "owner": "npm",
+                "pattern": {
+                    "regexp": ".*(Could not install from .*? as it does not contain a (package\\.json) file.*)",
+                    "message": 1,
+                    "file": 2,
+                }
+            }
         }
     ]
 }

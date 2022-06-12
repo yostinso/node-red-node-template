@@ -12,7 +12,8 @@
                 "<node_internals>/**"
             ],
             "program": "/usr/src/node-red/node_modules/.bin/node-red",
-            "args": [ "-v", "--userDir", "/data", "-D", "logging.console.level=trace" ]
+            "args": [ "-v", "--userDir", "/data", "-D", "logging.console.level=trace" ],
+            "preLaunchTask": "Install for debug"
         }
     ]
 }

@@ -24,7 +24,7 @@
 
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:/local_node_modules/node-red-contrib-development/node_modules/.bin"
-	},
+	}
 
 	// Uncomment the next line if you want start specific services in your Docker Compose config.
 	// "runServices": [],
@@ -33,7 +33,7 @@
 	// "shutdownAction": "none",
 
 	// Uncomment the next line to run commands after the container is created - for example installing curl.
-	"postCreateCommand": "cd /data && npm i /local_node_modules/node-red-contrib-development/"
+	//"postCreateCommand": "cd /data && npm i /local_node_modules/node-red-contrib-development/"
 
 	// Uncomment to connect as a non-root user if you've added one. See https://aka.ms/vscode-remote/containers/non-root.
 	// "remoteUser": "node-red"
