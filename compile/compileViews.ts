@@ -1,8 +1,5 @@
-import { notEqual } from "assert";
-import { memoize } from "async";
 import fs from "fs/promises";
 import path from "path";
-import { nextTick } from "process";
 
 const [ folder, outDir ] = process.argv.slice(2);
 

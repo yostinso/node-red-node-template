@@ -25,6 +25,6 @@
     "compile",
     "generate",
     "template",
-    "${packageName}/views"
+    "${packageName}/views/**"
   ]
 }

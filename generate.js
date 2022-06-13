@@ -115,7 +115,7 @@ function _generateNodeViews(packageName, nodeName) {
     .then(() => mkdir(`${packageName}/icons`, { recursive: true }))
     .then(() => {
         return Promise.all([
-            copyIfNotExists("template/views/tsconfig.json", `${packageName}/views/tsconfig.json`).then(([copied, src, dest]) => {
+            copyIfNotExists("template/views/tsconfig.template.json", `${packageName}/views/tsconfig.json`).then(([copied, src, dest]) => {
                 copied ? console.log(`Copied ${src} to ${dest}`) : console.log(`${dest} already exists`);
             }),
             copyIfNotExists(NODE_ICON, `${packageName}/icons/`).then(([copied, src, dest]) => {
