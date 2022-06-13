@@ -1,120 +1,165 @@
-import { mkdirSync } from "fs";
+import { notEqual } from "assert";
+import { memoize } from "async";
 import fs from "fs/promises";
 import path from "path";
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
+import { nextTick } from "process";
 
-const argv = yargs(hideBin(process.argv)).help("h").alias("h", "help").options({
-    outDir: { type: "string", describe: "specify output folder", default: "." },
-    locales: { type: "string", require: true, describe: "specify locales folder" }
-}).parseSync();
+const [ folder, outDir ] = process.argv.slice(2);
 
-const folders = argv._.map((s) => `${s}`);
-const outDir = argv.outDir;
-const localesDir = argv.locales;
+const EXTENSIONS = [ ".html", ".js" ];
+const INDENT = "  " as const;
 
-
-function getContentPaths(folder: string): Promise<string[]> {
-    return new Promise((resolve, reject) => {
-        fs.readdir(folder, { withFileTypes: true }).then((files) => {
-            const basePaths: (Promise<string[]> | string)[] = [];
-            files.forEach((dirent) => {
-                let filePath = path.join(folder, dirent.name);
-                if (dirent.isDirectory()) {
-                    basePaths.push(getContentPaths(filePath));
-                } else if (dirent.isFile() && dirent.name.endsWith(".html")) {
-                    basePaths.push(filePath);
-                } else if (dirent.isFile() && dirent.name.endsWith(".js")) {
-                    basePaths.push(filePath);
-                }
-            });
-            resolve(Promise.all(basePaths).then((paths) => paths.flat()));
-        });
-    });
+type NodeMetadata = {
+    [node: string]: {
+        views: string[];
+        locales: string[];
+        icons: string[];
+        logs: string[];
+    }
 }
 
-const INDENT = "  " as const;
+function uniq<T extends any[]>(arr: T): T {
+    return arr.reduce((memo, e) => memo.includes(e) ? memo : [ ...memo, e ], []);
+}
+async function collectNodeNames(folder: string): Promise<NodeMetadata> {
+    const files = await fs.readdir(folder, { withFileTypes: true });
+    const nodeNames = files.filter((f) => f.isFile() && path.parse(f.name).ext == ".js");
+    const uniqueNames = uniq(nodeNames.map((f) => path.parse(f.name).name));
+    return uniqueNames.reduce((memo, n) => ({ ...memo, [n]: {
+        views: [], locales: [], icons: [], logs: []
+    } }), {});
+}
+
+async function collectViewFiles(nodes: NodeMetadata, viewsDir: string): Promise<NodeMetadata> {
+    let filename;
+    const nodeNames = Object.keys(nodes);
+    for (let i in nodeNames) {
+        for (let j in EXTENSIONS) {
+            filename = path.join(viewsDir, `${nodeNames[i]}${EXTENSIONS[j]}`);
+            try {
+                if (await fs.stat(filename)) nodes[nodeNames[i]].views.push(filename);
+            } catch (err: any) {
+                if (err.code != "ENOENT") throw(err);
+            }
+        }
+    }
+    return nodes;
+}
+
 function indent(content: Buffer): Buffer {
     const lines = content.toString().split("\n").map((l) => INDENT + l);
     return Buffer.from(lines.join("\n"));
 }
+async function combineFiles(nodeName: string, files: string[]): Promise<string> {
+    
+    let type, header, content = "";
+    for (let i in files) {
+        type = path.parse(files[i]).ext;
+        header = type == ".js" ?
+            `<script type="module">\n` :
+            `<script type="text/x-red" data-template-name="${nodeName}">\n`;
+        content +=
+            header +
+            indent(await fs.readFile(files[i])) +
+            "\n</script>\n";
+    }
+    return content;
+}
 
-folders.forEach((folder) => {
-    getContentPaths(folder).then((contentPaths) => {
-        const baseFiles = contentPaths.filter((p) => !path.parse(p).name.includes(".") && path.parse(p).ext == ".html");
-        baseFiles.forEach((baseFile) => {
-            const baseName = path.parse(baseFile).name;
-            const related = contentPaths.filter((p) => path.parse(p).name == baseName && p != baseFile);
-            
-            const relatedByType = related.reduce((memo, p) => {
-                const type = path.parse(p).ext.slice(1);
-                return {
-                    ...memo,
-                    [type]: p
-                }
-            }, {} as { [type: string]: string });
+async function renderViews(nodes: NodeMetadata, viewsDirOut: string)  {
+    let content, outFile;
 
-            const outFile = path.join(
-                outDir,
-                path.relative(folder, baseFile)
-            );
+    await fs.mkdir(viewsDirOut, { recursive: true });
 
+    for (let node in nodes) {
+        outFile = path.join(viewsDirOut, `${node}.html`);
+        content = await combineFiles(node, nodes[node].views);
+        await fs.writeFile(outFile, content);
+        nodes[node].logs.push(`Rendered ${outFile} from ${JSON.stringify(nodes[node].views)}`);
+        //console.log(`Rendered ${outFile} from ${JSON.stringify(nodes[node].views)}`);
+    }
+    return nodes;
+}
+async function copyLocales(nodes: NodeMetadata, localesDir: string, localesDirOut: string) {
 
-            // Generate combined file
-            console.log(`Generating file ${outFile} from ${baseFile} and`, relatedByType);
-            mkdirSync(path.parse(outFile).dir, { recursive: true });
-            return fs.open(outFile, "w").then((fh) => {
-                return new Promise<fs.FileHandle>((resolve, reject) => {
-                    Object.entries(relatedByType).map(async ([type, subfile]) => {
-                        await fs.readFile(subfile).then(async (content) => {
-                            let scriptTag = type == "js" ?
-                                `<script type="module">\n` : 
-                                `<script type="text/x-red" data-template-name="${baseName}">\n`;
-                            await fh.write(scriptTag).then(() => {
-                                return fh.write(indent(content));
-                            }).then(() => {
-                                return fh.write("\n</script>\n");
-                            });
-                        });
-                        resolve(fh);
-                    });
-                })
-            }).then(async (fh) => {
-                await fs.readFile(baseFile).then(async (content) => {
-                    await fh.write(`<script type="text/x-red" data-template-name="${baseName}">\n`).then(() => {
-                        fh.write(indent(content))
-                    }).then(() => {
-                        return fh.write("\n</script>\n");
-                    });
+    let src: string, dest: string, localeFile: string;
+    let locality;
+
+    const localities = await fs.readdir(localesDir, { withFileTypes: true });
+    for (let i in localities) {
+        if (localities[i].isDirectory()) {
+            locality = localities[i].name;
+            await fs.mkdir(path.join(localesDirOut, locality), { recursive: true });
+
+            for (let node in nodes) {
+                localeFile = `${node}.json`;
+                src = path.join(localesDir, locality, localeFile);
+                dest = path.join(localesDirOut, locality, localeFile);
+
+                await fs.copyFile(src, dest).then(() => {
+                    nodes[node].logs.push(`Copied ${src} to ${dest}`);
+                    //console.log(`Copied ${src} to ${dest}`);
+                    nodes[node].locales.push(localeFile);
+                }).catch((err) => {
+                    if (err.code != "ENOENT") return Promise.reject(err);
+                    nodes[node].logs.push(`No localization file ${src}`);
+                    //console.log(`No localization file ${src}`);
                 });
-                return fh;
-            }).then(() => {
-                // Copy locales
-                return fs.readdir(localesDir, { withFileTypes: true }).then((langDirs) => {
-                    const languages = langDirs.map((langDir) => {
-                        if (langDir.isDirectory()) {
-                            return fs.readdir(path.join(localesDir, langDir.name), { withFileTypes: true }).then((langFiles) => {
-                                return langFiles.filter((langFile) => path.parse(langFile.name).name == baseName).map((langFile) => {
-                                    return path.join(localesDir, langDir.name, langFile.name);
-                                });
-                            });
-                        } else {
-                            return [];
-                        }
-                    });
-                    return Promise.all(languages).then((files) => files.flat());
-                }).then((localeFiles) => {
-                    console.log(`  with locales`, localeFiles);
-                    const promises = localeFiles.map((localeFile) => {
-                        const relPath = path.parse(path.relative(localesDir, localeFile));
-                        const newPath = path.join(outDir, "locales", relPath.dir, relPath.base);
-                        return fs.mkdir(path.join(outDir, "locales", relPath.dir), { recursive: true }).then(() => {
-                            return fs.copyFile(localeFile, newPath);
-                        });
-                    })
-                    return Promise.all(promises);
-                });
-            })
-        })
+            }
+        }
+    }
+    return nodes;
+}
+
+async function copyIcons(nodes: NodeMetadata, iconsDir: string, iconsDirOut: string) {
+    await fs.mkdir(path.join(iconsDirOut), { recursive: true });
+    for (let node in nodes) {
+        let jsView = nodes[node].views.find((v) => path.parse(v).ext == ".js");
+        if (!jsView) continue;
+        let js = await fs.readFile(jsView, "utf8");
+        let matched = Array.from(js.matchAll(/"?icon"?\s*:\s*"([^"]+\.(?:png|svg))"/g)).map((m) => m[1]);
+
+        for (let i in matched) {
+            let icon = matched[i];
+            let src = path.join(iconsDir, icon);
+            let dest = path.join(iconsDirOut, icon);
+            await fs.copyFile(src, dest).then(() => {
+                nodes[node].logs.push(`Copied ${src} to ${dest}`);
+                //console.log(`Copied ${src} to ${dest}`);
+                nodes[node].icons.push(icon);
+            }).catch((err) => {
+                if (err.code != "ENOENT") return Promise.reject(err);
+                nodes[node].logs.push(`No icon file ${src}`);
+                //console.log(`No icon file ${src}`);
+            });
+        }
+    }
+    return nodes;
+}
+
+async function main() {
+    const viewsDir = path.join(folder, "views");
+    const viewsDirOut = path.join(outDir, "views");
+
+    const localesDir = path.join(folder, "locales", );
+    const localesDirOut = path.join(outDir, "locales");
+
+    const iconsDir = path.join(folder, "icons");
+    const iconsDirOut = path.join(outDir, "icons");
+
+    return collectNodeNames(folder)
+    .then((nodes) => copyLocales(nodes, localesDir, localesDirOut))
+    .then((nodes) => collectViewFiles(nodes, viewsDir))
+    .then((nodes) => renderViews(nodes, viewsDirOut))
+    .then((nodes) => copyIcons(nodes, iconsDir, iconsDirOut))
+    .then((nodes) => {
+        for (let node in nodes) {
+            console.log(node);
+            console.log(nodes[node].logs.map((l) => INDENT + l).join("\n"));
+            console.log("");
+        }
     })
-})
+    .catch((err) => console.error(err));
+}
+
+main();

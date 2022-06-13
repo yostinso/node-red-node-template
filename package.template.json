@@ -33,7 +33,7 @@
         "compile:ts": "tsc",
         "compile:compilers": "tsc --project ./compile",
         "compile:views_ts": "tsc --project ./${packageName}/views",
-        "compile:views": "node ./compile/js/compileViews.js --outDir dist --locales ./${packageName}/locales ./${packageName}/views",
+        "compile:views": "node ./compile/js/compileViews.js ./${packageName} ./dist",
         "compile:clean": "rm -rf dist compile/js test/views/*.js",
         "compile:all": "npm run compile:compilers && npm run compile:views_ts && npm run compile:views && npm run compile:ts"
     },
