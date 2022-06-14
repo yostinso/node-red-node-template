@@ -3,55 +3,28 @@ const { readFile, writeFile } = require("fs").promises;
 const NODE_TS_TEMPLATE = "./template/node.ts";
 const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts";
 const NODE_HTML_TEMPLATE = "./template/views/node.html";
+const NODE_HELP_TEMPLATE = "./template/views/node.help.md";
 const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json";
 const ICONS_FOLDER = "./template/icons";
 const NODE_ICON = `${ICONS_FOLDER}/home.svg`;
 
-function readNodeTemplates() { 
-    return readFile(NODE_TS_TEMPLATE, "utf8").then((nodeTsTemplate) => {
-        return {
-            "${packageName}/${packageName}-${nodeName}.ts": nodeTsTemplate
-        };
-    }).then((t) => {
-        return readFile(NODE_VIEW_TS_TEMPLATE, "utf8").then((nodeViewTsTemplate) => {
-            return {
-                ...t,
-                "${packageName}/views/${packageName}-${nodeName}.ts": nodeViewTsTemplate
-            };
-        });
-    }).then((t) => {
-        return readFile(NODE_HTML_TEMPLATE, "utf8").then((nodeHtmlTemplate) => {
-            return {
-                ...t,
-                "${packageName}/views/${packageName}-${nodeName}.html": nodeHtmlTemplate
-            };
-        });
-    }).then((t) => {
-        return readFile(LOCALE_TEMPLATE, "utf8").then((localeTemplate) => {
-            return {
-                ...t, 
-                "${packageName}/locales/en-US/${packageName}-${nodeName}.json": localeTemplate
-            };
-        });
-    });
+async function readNodeTemplates() {
+    return {
+        "${packageName}/${packageName}-${nodeName}.ts": await readFile(NODE_TS_TEMPLATE, "utf8"),
+        "${packageName}/views/${packageName}-${nodeName}.ts": await readFile(NODE_VIEW_TS_TEMPLATE, "utf8"),
+        "${packageName}/views/${packageName}-${nodeName}.html": await readFile(NODE_HTML_TEMPLATE, "utf8"),
+        "${packageName}/locales/en-US/${packageName}-${nodeName}.json": await readFile(LOCALE_TEMPLATE, "utf8"),
+    };
 }
 
 const PACKAGE_JSON_TEMPLATE = "./package.template.json";
 const TSCONFIG_JSON_TEMPLATE = "./tsconfig.template.json";
 
-function readPackageTemplates() {
-    return readFile(PACKAGE_JSON_TEMPLATE, "utf8").then((packageJsonTemplate) => {
-        return {
-            "package.json": packageJsonTemplate
-        };
-    }).then((t) => {
-        return readFile(TSCONFIG_JSON_TEMPLATE, "utf8").then((tsconfigJsonTemplate) => {
-            return {
-                ...t,
-                "tsconfig.json": tsconfigJsonTemplate
-            };
-        });
-    });
+async function readPackageTemplates() {
+    return {
+        "package.json": await readFile(PACKAGE_JSON_TEMPLATE, "utf8"),
+        "tsconfig.json": await readFile(TSCONFIG_JSON_TEMPLATE, "utf8"),
+    };
 }
 
 // This is _not_ going to work if you get fancy with templates
