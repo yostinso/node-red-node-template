@@ -13,6 +13,7 @@ async function readNodeTemplates() {
         "${packageName}/${packageName}-${nodeName}.ts": await readFile(NODE_TS_TEMPLATE, "utf8"),
         "${packageName}/views/${packageName}-${nodeName}.ts": await readFile(NODE_VIEW_TS_TEMPLATE, "utf8"),
         "${packageName}/views/${packageName}-${nodeName}.html": await readFile(NODE_HTML_TEMPLATE, "utf8"),
+        "${packageName}/views/${packageName}-${nodeName}.help.md": await readFile(NODE_HELP_TEMPLATE, "utf8"),
         "${packageName}/locales/en-US/${packageName}-${nodeName}.json": await readFile(LOCALE_TEMPLATE, "utf8"),
     };
 }

@@ -3,7 +3,7 @@ import path from "path";
 
 const [ folder, outDir ] = process.argv.slice(2);
 
-const EXTENSIONS = [ ".html", ".js" ];
+const EXTENSIONS = [ ".html", ".js", ".help.md", ".help.html" ];
 const INDENT = "  " as const;
 
 type NodeMetadata = {
@@ -49,16 +49,26 @@ function indent(content: Buffer): Buffer {
 }
 async function combineFiles(nodeName: string, files: string[]): Promise<string> {
     
-    let type, header, content = "";
+    let content = "";
     for (let i in files) {
-        type = path.parse(files[i]).ext;
-        header = type == ".js" ?
-            `<script type="module">\n` :
-            `<script type="text/x-red" data-template-name="${nodeName}">\n`;
-        content +=
-            header +
-            indent(await fs.readFile(files[i])) +
-            "\n</script>\n";
+        let file = files[i];
+        if (file.endsWith(".js")) {
+            content += `<script type="module">\n`;
+        } else if (file.endsWith(".help.md")) {
+            content += `<script type="text/markdown" data-help-name="${nodeName}">\n`;
+        } else if (file.endsWith(".help.html")) {
+            content += `<script type="text/html" data-help-name="${nodeName}">\n`;
+        } else if (file.endsWith(".html")) {
+            content += `<script type="text/x-red" data-template-name="${nodeName}">\n`;
+        }
+
+        if (file.endsWith(".md")) {
+            // Can't indent markdown without making it act strange
+            content += await fs.readFile(file);
+        } else {
+            content +=  indent(await fs.readFile(file));
+        }
+        content += "\n</script>\n";
     }
     return content;
 }
