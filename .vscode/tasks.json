@@ -58,12 +58,12 @@
             "group": "build",
             "problemMatcher": [],
             "label": "Clean",
-            "detail": "rm -r dist"
+            "detail": "Remove compiled js, dist folder"
         },
         {
             "label": "Install for debug",
             "type": "shell",
-            "command": "cd /data && npm i /local_node_modules/node-red-contrib-development/",
+            "command": "./generate.js install",
             "detail": "Install this module into the included node-red for debugging.",
             "problemMatcher": {
                 "owner": "npm",

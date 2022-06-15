@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const { spawn } = require("child_process");
-const { readFile, mkdir } = require("fs").promises;
+const { readFile, mkdir, stat, writeFile } = require("fs/promises");
 const { copyIfNotExists } = require("./generate/fs_helpers");
 const { readPackageTemplates, readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } = require("./generate/template_helpers");
 const { parseArgs } = require("./generate/parse_args");
@@ -9,7 +9,7 @@ function printHelp() {
     console.log(`
     ./generate.js command [subcommand] [options]
 
-    generate
+    generate <subcommand> <args>
         packageJson -name <packageName> -maintainer "Your Name <your@email.com>" \
             [-githubUsername <username>] [-fullPackageName <node-red-contrib-packagename>]
             Generates package.json and tsconfig.json. You should only have to run this once when
@@ -25,6 +25,9 @@ function printHelp() {
             -name: Name of your node, e.g. "input"
             -packageName: Name of your package, used to prefix the node.
                 Defaults to the packageName stored in package.json.
+    install
+        Install package into /data for local testing & debugging
+
     Examples:
         # Initialize a new repo
         ./generate.js generate packageJson -name "fancy-http" -maintainer "Your Name <your@email.com>"
@@ -61,6 +64,9 @@ function main() {
                     console.log("Invalid subcommand ", subcommand);
                     break;
             }
+            break;
+        case "install":
+            install();
             break;
         default:
             printHelp();
@@ -149,4 +155,45 @@ function generateNode(nodeName, packageName) {
     .then((pkgJson) => writeJson("package.json", pkgJson))
     .then(() => _generateNodeViews(packageName, nodeName))
     .then(() => console.log("Done"));
+}
+
+function install() {
+    stat("/data/package.json").catch((err) => {
+        if (err.code == "ENOENT") {
+            // Create stub package.json
+            const packageJson = {
+                "name": "node-red-project",
+                "description": "A Node-RED Project",
+                "version": "0.0.1",
+                "private": true
+            };
+            console.log("Creating node-red default package.json on first run.");
+            return writeFile("/data/package.json", JSON.stringify(packageJson, null, 4));
+        } else {
+            return Promise.reject(err);
+        }
+    }).then(() => {
+        return readFile("/data/package.json", "utf8").then(JSON.parse).then((packageJson) => {
+            const installed = Object.values(packageJson.dependencies || {}).find((f) => {
+                return f == "file:../local_node_modules/node-red-contrib-development";
+            }) !== undefined;
+            let packageBuilt = true;
+            stat("./package.json").catch((err) => {
+                if (err.code == "ENOENT") { packageBuilt = false; } else {
+                    return Promise.reject(err);
+                }
+            }).then(() => {
+                if (!installed && packageBuilt) {
+                    console.log("Installing symlink to package on first run.");
+                    return spawn(
+                        "npm", ["i", "/local_node_modules/node-red-contrib-development/"],
+                        {
+                            cwd: "/data",
+                            stdio: "inherit"
+                        }
+                    );
+                }
+            });
+        });
+    });
 }
