@@ -136,7 +136,6 @@ async function copyIcons(nodes: NodeMetadata, iconsDir: string, iconsDirOut: str
 
 async function main() {
     const viewsDir = path.join(folder, "views");
-    const viewsDirOut = path.join(outDir, "views");
 
     const localesDir = path.join(folder, "locales", );
     const localesDirOut = path.join(outDir, "locales");
@@ -147,7 +146,7 @@ async function main() {
     return collectNodeNames(folder)
     .then((nodes) => copyLocales(nodes, localesDir, localesDirOut))
     .then((nodes) => collectViewFiles(nodes, viewsDir))
-    .then((nodes) => renderViews(nodes, viewsDirOut))
+    .then((nodes) => renderViews(nodes, outDir))
     .then((nodes) => copyIcons(nodes, iconsDir, iconsDirOut))
     .then((nodes) => {
         for (let node in nodes) {
