@@ -17,13 +17,13 @@
 
 	// The optional 'workspaceFolder' property is the path VS Code should open by default when
 	// connected. This is typically a file mount in .devcontainer/docker-compose.yml
-	"workspaceFolder": "/local_node_modules/node-red-contrib-development",
+	"workspaceFolder": "/local_node_modules/node-red-template-node",
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [ 1880 ],
 
 	"remoteEnv": {
-		"PATH": "${containerEnv:PATH}:/local_node_modules/node-red-contrib-development/node_modules/.bin"
+		"PATH": "${containerEnv:PATH}:/local_node_modules/node-red-template-node/node_modules/.bin"
 	}
 
 	// Uncomment the next line if you want start specific services in your Docker Compose config.
@@ -33,7 +33,7 @@
 	// "shutdownAction": "none",
 
 	// Uncomment the next line to run commands after the container is created - for example installing curl.
-	//"postCreateCommand": "cd /data && npm i /local_node_modules/node-red-contrib-development/"
+	//"postCreateCommand": "cd /data && npm i /local_node_modules/node-red-template-node/"
 
 	// Uncomment to connect as a non-root user if you've added one. See https://aka.ms/vscode-remote/containers/non-root.
 	// "remoteUser": "node-red"

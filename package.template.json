@@ -3,27 +3,27 @@
     "packageName": "${packageName}",
     "version": "0.0.1",
     "description": "A node to do some stuff",
-    "author": "${githubUsername}",
-    "homepage": "https://github.com/${githubUsername}/${fullPackageName}",
+    "author": "${author}",
+    "homepage": "https://github.com/${githubUsername}/${githubRepo}",
     "license": "Apache-2.0",
+    "contributors": [
+        "${author}"
+    ],
     "maintainers": [
-        "${maintainer}"
+        "${author}"
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/${githubUsername}/${fullPackageName}.git"
+        "url": "https://github.com/${githubUsername}/${githubRepo}.git"
     },
     "bugs": {
-        "url": "https://github.com/${githubUsername}/${fullPackageName}/issues"
+        "url": "https://github.com/${githubUsername}/${githubRepo}/issues"
     },
     "keywords": [
-        "node-red",
-        "node-red-contrib",
-        "contrib",
-        "smart-home",
-        "home-automation"
+        "node-red"
     ],
     "node-red": {
+        "version": ">=2.2.0",
         "nodes": {}
     },
     "publishConfig": {

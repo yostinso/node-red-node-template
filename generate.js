@@ -1,25 +1,33 @@
 #!/usr/bin/env node
+"use strict";
 const { spawn } = require("child_process");
 const { readFile, mkdir, stat, writeFile } = require("fs/promises");
 const { copyIfNotExists } = require("./generate/fs_helpers");
 const { readPackageTemplates, readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } = require("./generate/template_helpers");
 const { parseArgs } = require("./generate/parse_args");
+const { full } = require("acorn-walk");
 
 function printHelp() {
     console.log(`
     ./generate.js command [subcommand] [options]
 
     generate <subcommand> <args>
-        packageJson -name <packageName> -maintainer "Your Name <your@email.com>" \
-            [-githubUsername <username>] [-fullPackageName <node-red-contrib-packagename>]
+        packageJson -name <packageName> -author "Your Name <your@email.com>" \
+            [-author <username>] [-scope <scopeWithout@>] \
+            [-githubUsername <username>]  [-githubRepo <node-red-packagename>] \
+            [-fullPackageName <@username/node-red-package-name>]
             Generates package.json and tsconfig.json. You should only have to run this once when
             setting up a new repo.
             -name: Basic package name, e.g. "fancy-http"
-            -maintainer: Name/Email combo for package.json
-            -githubUsername: Github username, assuming repo is username/fullPackageName.
-                Defaults to the username part of your maintainer email address.
+            -author: Author/maintainer for node package
+            -scope: scope for the package.
+                Defaults to the username part of the author email address.
+            -githubUsername: Github username, used to generate repo path
+                Defaults to the username part of your author email address.
+            -githubRepo: Github repo name within your Github account
+                Defaults to "node-red-<packageName>".
             -fullPackageName: full npm package name.
-                Defaults to "node-red-contrib-<name>"
+                Defaults to "@<scope>/node-red-<packageName>".
         node -name <nodeName> [-packageName <packageName>]
             Generate a new node from templates and update package.json
             -name: Name of your node, e.g. "input"
@@ -30,7 +38,7 @@ function printHelp() {
 
     Examples:
         # Initialize a new repo
-        ./generate.js generate packageJson -name "fancy-http" -maintainer "Your Name <your@email.com>"
+        ./generate.js generate packageJson -name "fancy-http" -author "Your Name <your@email.com>"
 
         # Create a node fancy-http-input
         ./generate.js generate node -name "input"
@@ -49,10 +57,9 @@ function main() {
                     {
                         let {
                             name: packageName,
-                            maintainer, githubUsername,
-                            fullPackageName
+                            author, scope, githubUsername, githubRepo, fullPackageName
                         } = parseArgs(argv);
-                        return generatePkgJson(packageName, maintainer, githubUsername, fullPackageName);
+                        return generatePkgJson(packageName, author, scope, githubUsername, githubRepo, fullPackageName);
                     }
                 case "node":
                     {
@@ -94,21 +101,32 @@ function _npmInstall() {
     });
 }
 
-function generatePkgJson(packageName, maintainer, githubUsername, fullPackageName) {
-    if (!packageName || !maintainer) {
+function generatePkgJson(packageName, author, scope, githubUsername, githubRepo, fullPackageName) {
+    if (!packageName || !author) {
         return Promise.reject(`
-        You must provide a name and maintainer!
+        You must provide at least a package name and author!
         e.g. ./generate.js generate packageJson -name fancy-http -maintainer "My Name <your@email.com>"\n`
         );
-        return Promise.reject();
     }
 
     console.log("Generating package.json...");
-    githubUsername = githubUsername || maintainer.match(/<([^>]+)@[^>]*>/)[1];
-    fullPackageName = fullPackageName || `node-red-contrib-${packageName}`;
+    scope = scope || author.match(/<([^>]+)@[^>]*>/)[1];
+    if (!scope && !fullPackageName) {
+        return Promise.reject(`
+        No scope provided, and unable to parse username from the author string.\n`
+        );
+    }
+    githubUsername = githubUsername || author.match(/<([^>]+)@[^>]*>/)[1];
+    if (!githubUsername) {
+        return Promise.reject(`
+        No githubUsername provided and unable to parse it from the author string.\n`
+        );
+    }
+    githubRepo = githubRepo || `node-red-${packageName}`;
+    fullPackageName = fullPackageName || `@${scope}/node-red-${packageName}`;
 
     return readPackageTemplates()
-    .then((templates) => templateReplaceAll(templates, { packageName, maintainer, githubUsername, fullPackageName }))
+    .then((templates) => templateReplaceAll(templates, { packageName, author, githubUsername, githubRepo, fullPackageName }))
     .then((generated) => templateWriteAll(generated))
     .then(() => _npmInstall())
     .then(() => console.log("Done"));
@@ -175,7 +193,7 @@ function install() {
     }).then(() => {
         return readFile("/data/package.json", "utf8").then(JSON.parse).then((packageJson) => {
             const installed = Object.values(packageJson.dependencies || {}).find((f) => {
-                return f == "file:../local_node_modules/node-red-contrib-development";
+                return f == "file:../local_node_modules/node-red-template-node";
             }) !== undefined;
             let packageBuilt = true;
             stat("./package.json").catch((err) => {
@@ -186,7 +204,7 @@ function install() {
                 if (!installed && packageBuilt) {
                     console.log("Installing symlink to package on first run.");
                     return spawn(
-                        "npm", ["i", "/local_node_modules/node-red-contrib-development/"],
+                        "npm", ["i", "/local_node_modules/node-red-template-node/"],
                         {
                             cwd: "/data",
                             stdio: "inherit"
