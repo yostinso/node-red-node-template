@@ -1,5 +1,6 @@
-import NodeRedNode, { EditorConfig } from "node-red-es6-shim";
 import * as NodeRed from "node-red";
+import { NodeMessage, NodeMessageInFlow } from "node-red";
+import NodeRedNode, { EditorConfig } from "node-red-es6-shim";
 import util from "util";
 
 type Defaults = EditorConfig["defaults"];
@@ -19,6 +20,18 @@ export class ${nodeClass} extends NodeRedNode {
         super(node);
         this.config = config;
         this.RED = RED;
+        this.initialize();
+    }
+    initialize() {
+        this.on("input", this.handleMessage);
+    }
+    handleMessage(msg: NodeMessageInFlow, send: (msg: NodeMessage | Array<NodeMessage | NodeMessage[] | null>) => void, done: (err?: Error) => void): void {
+        const newMsg = {
+            ...msg,
+            topic: "Hello World"
+        };
+        send(newMsg);
+        if (done) { done(); }
     }
 }
 
