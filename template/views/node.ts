@@ -1,6 +1,6 @@
 import { EditorRED } from "node-red"
 import { EditorConfig } from "node-red-es6-shim";
-import { ${nodeClass}Defaults } from "../test-my-node";
+import { ${nodeClass}Defaults } from "../${packageName}-${nodeName}";
 
 declare var RED: EditorRED;
 type Config = EditorConfig & { defaults: ${nodeClass}Defaults };
