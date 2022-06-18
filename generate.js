@@ -105,7 +105,7 @@ function generatePkgJson(packageName, author, scope, githubUsername, githubRepo,
     if (!packageName || !author) {
         return Promise.reject(`
         You must provide at least a package name and author!
-        e.g. ./generate.js generate packageJson -name fancy-http -maintainer "My Name <your@email.com>"\n`
+        e.g. ./generate.js generate packageJson -name fancy-http -author "My Name <your@email.com>"\n`
         );
     }
 
