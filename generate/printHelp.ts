@@ -4,12 +4,14 @@ export function printHelp() {
     ./generate.js command [subcommand] [options]
 
     generate <subcommand> <args>
-        packageJson -name <packageName> -author "Your Name <your@email.com>" \
-            [-author <username>] [-scope <scopeWithout@>] \
-            [-githubUsername <username>]  [-githubRepo <node-red-packagename>] \
+        packageJson -name <packageName> -author "Your Name <your@email.com>" \\
+            [-author <username>] [-scope <scopeWithout@>] \\
+            [-githubUsername <username>]  [-githubRepo <node-red-packagename>] \\
             [-fullPackageName <@username/node-red-package-name>]
+
             Generates package.json and tsconfig.json. You should only have to run this once when
             setting up a new repo.
+
             -name: Basic package name, e.g. "fancy-http"
             -author: Author/maintainer for node package
             -scope: scope for the package.

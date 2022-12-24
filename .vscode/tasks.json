@@ -8,10 +8,25 @@
 				"$tsc"
 			],
 			"group": {
+				"kind": "build"
+			},
+			"label": "tsc: build - tsconfig.json"
+		},
+		{
+			"type": "shell",
+			"command": "chmod",
+			"args": [
+				"a+x",
+				"${workspaceFolder}/dist/generate.js"
+			],
+			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
-			"label": "tsc: build - tsconfig.json"
+			"dependsOn": [
+				"tsc: build - tsconfig.json"
+			],
+			"label": "Make generate.js executable"
 		}
 	]
 }
