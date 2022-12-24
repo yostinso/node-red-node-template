@@ -1,78 +1,17 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "inputs": [
-        {
-            "id": "packageName",
-            "type": "promptString",
-            "default": "mynodes",
-            "description": "Package name extension for the node"
-        }
-    ],
-    "tasks": [
-        {
-            "label": "Compile TS",
-            "type": "typescript",
-            "tsconfig": "tsconfig.json",
-            "problemMatcher": [
-                "$tsc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "dependsOn": [
-                "Compile Views"
-            ]
-        },
-        {
-            "label": "Compile Views",
-            "type": "npm",
-            "script": "compile:views",
-            "group": "build",
-            "problemMatcher": [],
-            "detail": "node ./compile/js/compileViews.js --outDir dist ./${input:packageName}/views",
-            "dependsOn":  [ "Compile Views TS", "Compile Compilers" ],
-            "dependsOrder": "parallel"
-        },
-        {
-            "type": "npm",
-            "script": "compile:views_ts",
-            "group": "build",
-            "problemMatcher": [],
-            "label": "Compile Views TS",
-            "detail": "tsc --project ./views"
-        },
-        {
-            "type": "npm",
-            "script": "compile:compilers",
-            "group": "build",
-            "problemMatcher": [],
-            "label": "Compile Compilers",
-            "detail": "tsc --project ./compile"
-        },
-        {
-            "type": "npm",
-            "script": "compile:clean",
-            "group": "build",
-            "problemMatcher": [],
-            "label": "Clean",
-            "detail": "Remove compiled js, dist folder"
-        },
-        {
-            "label": "Install for debug",
-            "type": "shell",
-            "command": "./generate.js install",
-            "detail": "Install this module into the included node-red for debugging.",
-            "problemMatcher": {
-                "owner": "npm",
-                "pattern": {
-                    "regexp": ".*(Could not install from .*? as it does not contain a (package\\.json) file.*)",
-                    "message": 1,
-                    "file": 2,
-                }
-            }
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "tsc: build - tsconfig.json"
+		}
+	]
 }

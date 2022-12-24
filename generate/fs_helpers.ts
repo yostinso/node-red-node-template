@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 
-function copyIfNotExists(src, dest) {
+function copyIfNotExists(src: string, dest: string) {
     return fs.promises.opendir(dest).then((dir) => {
         // Need to figure out full path
         dest = path.join(dir.path, path.basename(src));
@@ -14,6 +14,4 @@ function copyIfNotExists(src, dest) {
     });
 }
 
-module.exports = {
-    copyIfNotExists
-}
+export { copyIfNotExists };

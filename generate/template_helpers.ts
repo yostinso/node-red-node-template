@@ -1,12 +1,12 @@
-const { readFile, writeFile } = require("fs").promises;
+import { readFile, writeFile } from "fs/promises";
 
-const NODE_TS_TEMPLATE = "./template/node.ts";
-const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts";
-const NODE_HTML_TEMPLATE = "./template/views/node.html";
-const NODE_HELP_TEMPLATE = "./template/views/node.help.md";
-const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json";
-const ICONS_FOLDER = "./template/icons";
-const NODE_ICON = `${ICONS_FOLDER}/home.svg`;
+const NODE_TS_TEMPLATE = "./template/node.ts" as const;
+const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts" as const;
+const NODE_HTML_TEMPLATE = "./template/views/node.html" as const;
+const NODE_HELP_TEMPLATE = "./template/views/node.help.md" as const;
+const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json" as const;
+const ICONS_FOLDER = "./template/icons" as const;
+const NODE_ICON = `${ICONS_FOLDER}/home.svg` as const;
 
 async function readNodeTemplates() {
     return {
@@ -29,7 +29,7 @@ async function readPackageTemplates() {
 }
 
 // This is _not_ going to work if you get fancy with templates
-function templateReplace(template, object) {
+function templateReplace(template: string, object: Record<string, string>) {
     let result = template;
     Object.entries(object).forEach(([k, v]) => {
         const repl = new RegExp('\\$\\{' + k + '\\}', "g")
@@ -38,7 +38,7 @@ function templateReplace(template, object) {
     return result;
 }
 
-function templateReplaceAll(templates, object) {
+function templateReplaceAll(templates: { [templatePath: string]: string }, object: Record<string, string>): { [templatePath: string]: string } {
     return Object.entries(templates).reduce((tmpl, [name, template]) => {
         const k = templateReplace(name, object),
                 v = templateReplace(template, object);
@@ -46,7 +46,7 @@ function templateReplaceAll(templates, object) {
     }, {});
 }
 
-function templateWriteAll(generated) {
+function templateWriteAll(generated: { [path: string]: string }) {
     return Promise.all(
         Object.entries(generated).map(([filename, content]) => {
             console.log(`Generated ${filename}`);
@@ -55,11 +55,11 @@ function templateWriteAll(generated) {
     );
 }
 
-function writeJson(filename, json) {
+function writeJson(filename: string, json: any) {
     return writeFile(filename, JSON.stringify(json, null, 4));
 }
 
-module.exports = {
+export {
     readNodeTemplates, readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson,
     NODE_ICON
-};
+}

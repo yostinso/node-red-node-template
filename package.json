@@ -1,0 +1,27 @@
+{
+  "name": "@yostinso/node-red-node-template",
+  "version": "1.0.0",
+  "description": "Generator for Node-RED custom nodes that can be developed using TypeScript and ES6 classes instead of bare Javascript.",
+  "main": "generate.js",
+  "devDependencies": {
+    "@tsconfig/node18": "^1.0.1",
+    "@types/node": "^18.11.17"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate": "./generate.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yostinso/node-red-node-template.git"
+  },
+  "keywords": [
+    "node-red"
+  ],
+  "author": "E.O. Stinson",
+  "license": "CC-BY-NC-SA-4.0",
+  "bugs": {
+    "url": "https://github.com/yostinso/node-red-node-template/issues"
+  },
+  "homepage": "https://github.com/yostinso/node-red-node-template#readme"
+}
