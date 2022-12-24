@@ -14,19 +14,3 @@ main().catch((err) => {
     printHelp();
     if (err) console.error(err);
 });
-
-/*
-export function _npmInstall() {
-    console.log("Running npm install...");
-    return new Promise((resolve, reject) => {
-        spawn("npm", ["i"], {
-            stdio: "inherit"
-        }).on("close", (code) => {
-            code == 0 ? resolve() : reject(code);
-        });
-    }).then(() => {
-        console.log("Done.");
-    });
-}
-
-*/
