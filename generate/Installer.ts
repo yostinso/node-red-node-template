@@ -1,10 +1,11 @@
 "use strict";
 import { spawn } from "child_process";
+import { Stats } from "fs";
 import { readFile, stat, writeFile } from "fs/promises";
 import { PackageJson } from "./package-json";
 
-export class Installer {
-    private createPackageJsonIfNotExists(): Promise<any> {
+export default class Installer {
+    private createPackageJsonIfNotExists(): Promise<void | Stats> {
         return stat("/data/package.json").catch((err) => {
             if (err.code == "ENOENT") {
                 // Create stub package.json
@@ -28,7 +29,7 @@ export class Installer {
     private isInstalled(packageJson: Partial<PackageJson>): boolean {
         const nodeName = "node-red-template-node"; // TODO Should this be dynamic?
         return Object.values(packageJson.dependencies || {}).find((f) => {
-            return f == "file:../local_node_modules/node-red-template-node";
+            return f == `file:../local_node_modules/${nodeName}`;
         }) !== undefined;
     }
 
@@ -36,7 +37,7 @@ export class Installer {
         return stat("./package.json")
         .then(() => true)
         .catch((err) => {
-            if (err.code == "ENOENT") { return false; } else { throw err; }
+            if (err.code == "ENOENT") { return false } else { throw err }
         });
     }
 

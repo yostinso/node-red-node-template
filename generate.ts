@@ -11,6 +11,6 @@ function main() {
 }
 
 main().catch((err) => {
-    printHelp();
+    printHelp(process.stdout);
     if (err) console.error(err);
 });

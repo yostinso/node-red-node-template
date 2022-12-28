@@ -1,8 +1,8 @@
 "use strict";
 import { readFile, mkdir } from "fs/promises";
 import { copyIfNotExists } from "./fs_helpers";
-import { readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } from "./template_helpers";
-import parseArgs from "./parse_args";
+import { readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } from "./templateHelpers";
+import parseArgs from "./parseArgs";
 
 export type NodeGeneratorArgs = {
     nodeName: string

@@ -7,7 +7,7 @@ function copyIfNotExists(src: string, dest: string) {
         dest = path.join(dir.path, path.basename(src));
     }).catch(() => true)
     .then(() => fs.promises.copyFile(src, dest, fs.constants.COPYFILE_EXCL).then(() => true).catch((err) => {
-        if (err.code == "EEXIST") { return false; }
+        if (err.code == "EEXIST") { return false }
         return Promise.reject(err);
     })).then((copied) => {
         return [ copied, src, dest ];

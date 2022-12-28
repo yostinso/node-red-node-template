@@ -18,8 +18,8 @@ async function readNodeTemplates() {
     };
 }
 
-const PACKAGE_JSON_TEMPLATE = "./package.template.json";
-const TSCONFIG_JSON_TEMPLATE = "./tsconfig.template.json";
+const PACKAGE_JSON_TEMPLATE = "./template/module/package.template.json";
+const TSCONFIG_JSON_TEMPLATE = "./template/module/tsconfig.template.json";
 
 async function readPackageTemplates() {
     return {
@@ -32,7 +32,7 @@ async function readPackageTemplates() {
 function templateReplace(template: string, object: Record<string, string>) {
     let result = template;
     Object.entries(object).forEach(([k, v]) => {
-        const repl = new RegExp('\\$\\{' + k + '\\}', "g")
+        const repl = new RegExp("\\$\\{" + k + "\\}", "g");
         result = result.replace(repl, v);
     });
     return result;
@@ -41,20 +41,21 @@ function templateReplace(template: string, object: Record<string, string>) {
 function templateReplaceAll(templates: { [templatePath: string]: string }, object: Record<string, string>): { [templatePath: string]: string } {
     return Object.entries(templates).reduce((tmpl, [name, template]) => {
         const k = templateReplace(name, object),
-                v = templateReplace(template, object);
+              v = templateReplace(template, object);
         return  { ...tmpl, [k]: v };
     }, {});
 }
 
-function templateWriteAll(generated: { [path: string]: string }) {
+function templateWriteAll(generated: { [path: string]: string }, logCallback?: (msg: string) => void) {
     return Promise.all(
         Object.entries(generated).map(([filename, content]) => {
-            console.log(`Generated ${filename}`);
+            if (logCallback) logCallback(`Generated ${filename}`);
             return writeFile(filename, content);
         })
     );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function writeJson(filename: string, json: any) {
     return writeFile(filename, JSON.stringify(json, null, 4));
 }
@@ -62,4 +63,4 @@ function writeJson(filename: string, json: any) {
 export {
     readNodeTemplates, readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson,
     NODE_ICON
-}
+};

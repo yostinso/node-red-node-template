@@ -1,6 +1,11 @@
 "use strict";
-export function printHelp() {
-    console.log(`
+
+interface Logger {
+    write(buffer: string): boolean;
+}
+
+export function printHelp(logger: Logger) {
+    logger.write(`
     ./generate.js command [subcommand] [options]
 
     generate <subcommand> <args>
@@ -22,6 +27,8 @@ export function printHelp() {
                 Defaults to "node-red-<packageName>".
             -fullPackageName: full npm package name.
                 Defaults to "@<scope>/node-red-<packageName>".
+            -rootPath: (relative) path to where you'd like to create the new files
+                Defaults to "."
         node -name <nodeName> [-packageName <packageName>]
             Generate a new node from templates and update package.json
             -name: Name of your node, e.g. "input"
