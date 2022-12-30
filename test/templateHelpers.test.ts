@@ -1,5 +1,5 @@
 import { it, describe, expect } from "@jest/globals";
-import { readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson } from "../generate/templateHelpers";
+import { readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson, addPathPrefixes } from "../generate/templateHelpers";
 import { writeFile } from "fs/promises";
 
 jest.mock("fs/promises", () => {
@@ -44,6 +44,18 @@ describe(templateReplaceAll, () => {
             test: "ONE",
             TWO: "two"
         });
+    });
+});
+
+describe(addPathPrefixes, () => {
+    it("should update the paths in the template keys with the provided prefix", () => {
+        const templates = { "path1.json": "1", "path2.json": "2" };
+        const prefix = "some/prefix";
+        const expected = { "some/prefix/path1.json": "1", "some/prefix/path2.json": "2" };
+
+        const result = addPathPrefixes(templates, prefix);
+
+        expect(result).toEqual(expected);
     });
 });
 

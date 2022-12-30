@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "fs/promises";
+import path from "path";
 
 const NODE_TS_TEMPLATE = "./template/node.ts" as const;
 const NODE_VIEW_TS_TEMPLATE = "./template/views/node.ts" as const;
@@ -46,6 +47,16 @@ function templateReplaceAll(templates: { [templatePath: string]: string }, objec
     }, {});
 }
 
+function addPathPrefixes(templates: { [templatePath: string]: string }, prefix: string): { [templatePath: string]: string } {
+    return Object.entries(templates).reduce((memo: { [templatePath: string]: string }, [k, v]) => {
+        const prefixPath = path.join(prefix, k);
+        return {
+            ...memo,
+            [prefixPath]: v
+        };
+    }, {});
+}
+
 function templateWriteAll(generated: { [path: string]: string }, logCallback?: (msg: string) => void) {
     return Promise.all(
         Object.entries(generated).map(([filename, content]) => {
@@ -61,6 +72,6 @@ function writeJson(filename: string, json: any) {
 }
 
 export {
-    readNodeTemplates, readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson,
+    readNodeTemplates, readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson, addPathPrefixes,
     NODE_ICON
 };

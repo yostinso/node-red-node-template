@@ -3,14 +3,17 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import path from "path";
 import PackageJsonGenerator, { PackageJsonGeneratorArgs } from "../generate/PackageJsonGenerator";
-import { templateWriteAll } from "../generate/templateHelpers";
+import { templateWriteAll, addPathPrefixes, templateReplaceAll } from "../generate/templateHelpers";
 import "./util";
 
 jest.mock("../generate/templateHelpers", () => {
     const original = jest.requireActual("../generate/templateHelpers");
     return {
         ...original,
-        templateWriteAll: jest.fn()
+        addPathPrefixes: jest.fn().mockImplementation(original.addPathPrefixes), 
+        templateReplaceAll: jest.fn().mockImplementation(original.templateReplaceAll), 
+        templateWriteAll: jest.fn(),
+        _templateWriteAll: original.templateWriteAll
     };
 });
 
@@ -37,24 +40,27 @@ describe(PackageJsonGenerator, () => {
             }).rejects.toThrow(/provide at least a package name and author/);
         });
         it("it should parse minimal args", async () => {
-            const expected: PackageJsonGeneratorArgs = {
+            const expected: Omit<PackageJsonGeneratorArgs, "rootPath" | "scope"> = {
                 author: "Test User <author@email.com>",
                 packageName: "package-name",
                 githubUsername: "author",
                 fullPackageName: "@author/node-red-package-name",
                 githubRepo: "node-red-package-name",
-                scope: "author",
-                rootPath: "."
             };
+            const expectedRootPath = ".";
             const args = [
                 "--name", "package-name",
                 "--author", "Test User <author@email.com>"
             ];
             const generator = new PackageJsonGenerator(logger);
-            generateMock.mockImplementationOnce(jest.fn());
-            await generator.generateFromArgs(args);
 
-            expect(generateMock).toBeCalledWith(expect.objectContaining(expected));
+            await generator.generateFromArgs(args);
+            
+            expect(addPathPrefixes).toBeCalledWith(expect.anything(), expectedRootPath);
+            expect(templateReplaceAll).toBeCalledWith(
+                expect.anything(),
+                expect.objectContaining(expected)
+            );
         });
         it("it should parse complete args", async () => {
             const expected: PackageJsonGeneratorArgs = {
