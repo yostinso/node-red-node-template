@@ -7,7 +7,6 @@ const MockedInstaller = jest.mocked(Installer);
 
 import PackageJsonGenerator from "../generate/PackageJsonGenerator";
 jest.mock("../generate/PackageJsonGenerator");
-const MockedPackageJsonGenerator = jest.mocked(PackageJsonGenerator);
 
 import NodeGenerator from "../generate/NodeGenerator";
 jest.mock("../generate/NodeGenerator");
@@ -90,10 +89,12 @@ describe(ExecutionHandler, () => {
                 const args = ["generate", "packageJson", "extra", "args"];
                 const executer = new ExecutionHandler(logger);
 
+                const mockGenerate = jest.spyOn(PackageJsonGenerator.prototype, "generate").mockImplementationOnce(jest.fn());
+
                 executer.handleArguments(args);
 
-                expect(PackageJsonGenerator).toHaveBeenCalledTimes(1);
-                expect(MockedPackageJsonGenerator.mock.instances[0].generateFromArgs).toHaveBeenCalledWith(["extra", "args"]);
+                expect(PackageJsonGenerator).toHaveBeenCalledWith(["extra", "args"], expect.anything());
+                expect(mockGenerate).toHaveBeenCalledTimes(1);
             });
         });
         describe("node", () => {

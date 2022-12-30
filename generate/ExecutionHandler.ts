@@ -49,8 +49,8 @@ export class ExecutionHandler {
     }
 
     private handlePackageJsonSubcommand(args: string[]): Promise<void> {
-        const generator = new PackageJsonGenerator(this.logger);
-        return generator.generateFromArgs(args);
+        const generator = new PackageJsonGenerator(args, this.logger);
+        return generator.generate();
     }
 
     private handleNodeSubcommand(args: string[]): Promise<void> {

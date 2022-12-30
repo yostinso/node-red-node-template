@@ -34,10 +34,13 @@ describe(PackageJsonGenerator, () => {
         afterAll(() => generateMock.mockRestore());
 
         it("it should print an error on bad arguments", () => {
-            const generator = new PackageJsonGenerator(logger);
+            const args = [
+                "--bogus", "package-name",
+                "--author", "author@email.com"
+            ];
             expect(() => {
-                return generator.generateFromArgs(["--bogus", "package-name", "--author", "author@email.com"]);
-            }).rejects.toThrow(/provide at least a package name and author/);
+                new PackageJsonGenerator(args, logger);
+            }).toThrow(/provide at least a package name and author/);
         });
         it("it should parse minimal args", async () => {
             const expected: Omit<PackageJsonGeneratorArgs, "rootPath" | "scope"> = {
@@ -52,9 +55,9 @@ describe(PackageJsonGenerator, () => {
                 "--name", "package-name",
                 "--author", "Test User <author@email.com>"
             ];
-            const generator = new PackageJsonGenerator(logger);
+            const generator = new PackageJsonGenerator(args, logger);
 
-            await generator.generateFromArgs(args);
+            await generator.generate();
             
             expect(addPathPrefixes).toBeCalledWith(expect.anything(), expectedRootPath);
             expect(templateReplaceAll).toBeCalledWith(
@@ -81,11 +84,8 @@ describe(PackageJsonGenerator, () => {
                 "--scope", "custom-specific-scope",
                 "--rootPath", "test/"
             ];
-            const generator = new PackageJsonGenerator(logger);
-            generateMock.mockImplementationOnce(jest.fn());
-            await generator.generateFromArgs(args);
-
-            expect(generateMock).toBeCalledWith(expect.objectContaining(expected));
+            const generator = new PackageJsonGenerator(args, logger);
+            expect(generator.args).toMatchObject(expected);
         });
         it("it should print an error on bad Github username", () => {
             const args = [
@@ -93,20 +93,18 @@ describe(PackageJsonGenerator, () => {
                 "--author", "Test User <>",
                 "--scope", "scope"
             ];
-            const generator = new PackageJsonGenerator(logger);
-            return expect(() => {
-                return generator.generateFromArgs(args);
-            }).rejects.toThrow(/No githubUsername/);
+            expect(
+                () => new PackageJsonGenerator(args, logger)
+            ).toThrow(/No githubUsername/);
         });
         it("it should print an error on bad scope", () => {
             const args = [
                 "--name", "package-name",
                 "--author", "Test User <>"
             ];
-            const generator = new PackageJsonGenerator(logger);
-            return expect(() => {
-                return generator.generateFromArgs(args);
-            }).rejects.toThrow(/No scope provided/);
+            expect(
+                () => new PackageJsonGenerator(args, logger)
+            ).toThrow(/No scope provided/);
         });
         it("it should print an error on missing rootPath", () => {
             const args = [
@@ -114,10 +112,9 @@ describe(PackageJsonGenerator, () => {
                 "--author", "Test User <author@email.com>",
                 "--rootPath", "./this-doesnt-exist"
             ];
-            const generator = new PackageJsonGenerator(logger);
-            return expect(() => {
-                return generator.generateFromArgs(args);
-            }).rejects.toThrow(/Invalid rootPath .* Directory not found/);
+            expect(
+                () => new PackageJsonGenerator(args, logger)
+            ).toThrow(/Invalid rootPath .* Directory not found/);
         });
         it("it should print an error on non-folder rootPath", () => {
             const args = [
@@ -125,10 +122,9 @@ describe(PackageJsonGenerator, () => {
                 "--author", "Test User <author@email.com>",
                 "--rootPath", "./package.json"
             ];
-            const generator = new PackageJsonGenerator(logger);
-            return expect(() => {
-                return generator.generateFromArgs(args);
-            }).rejects.toThrow(/Invalid rootPath .* Must be a directory/);
+            expect(
+                () => new PackageJsonGenerator(args, logger)
+            ).toThrow(/Invalid rootPath .* Must be a directory/);
         });
     });
 
@@ -144,7 +140,7 @@ describe(PackageJsonGenerator, () => {
             }
         });
 
-        it("it should try to write out generated templates", async () => {
+        it("should try to write out generated templates", async () => {
             const args: PackageJsonGeneratorArgs = {
                 author: "testuser@gmail.com",
                 packageName: "test-package",
@@ -157,8 +153,8 @@ describe(PackageJsonGenerator, () => {
             const npmI = jest.spyOn(PackageJsonGenerator.prototype as unknown as { npmInstall: () => Promise<void> }, "npmInstall");
             npmI.mockImplementation(jest.fn());
 
-            const generator = new PackageJsonGenerator(logger);
-            await generator.generate(args);
+            const generator = new PackageJsonGenerator(args, logger);
+            await generator.generate();
             expect(npmI).toBeCalledTimes(1);
 
             expect(jest.mocked(templateWriteAll)).toHaveBeenCalledWith(

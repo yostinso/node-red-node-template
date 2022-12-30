@@ -19,29 +19,35 @@ type PartialPlus<T, K extends keyof T> = Partial<T> & Required<Pick<T, K>>
 type PartialArgs = Partial<PackageJsonGeneratorArgs>
 type PartialArgsPlus<K extends keyof PartialArgs> = PartialPlus<PartialArgs, K>
 
+function isArgv(args: unknown): args is string[] {
+    return (
+        Array.isArray(args) &&
+        args.every((e) => typeof e === "string")
+    );
+}
+
 export default class PackageJsonGenerator {
     logger: Logger;
-    constructor(logger: Logger) {
+    args: PackageJsonGeneratorArgs;
+    constructor(args: string[] | PartialArgs, logger: Logger) {
         this.logger = logger;
-    }
-    async generate(args: unknown | PackageJsonGeneratorArgs): Promise<void> {
+
+        if (isArgv(args)) { args = this.parseArgs(args) }
         this.validateArgs(args);
+        this.args = args;
+    }
+    async generate(): Promise<void> {
         this.logger.write("Generating package.json...\n");
 
-        const { packageName, author, githubUsername, githubRepo, fullPackageName } = args;
+        const { packageName, author, githubUsername, githubRepo, fullPackageName } = this.args;
 
         const templates = await readPackageTemplates();
-        addPathPrefixes(templates, args.rootPath);
+        addPathPrefixes(templates, this.args.rootPath);
 
         const generated = await templateReplaceAll(templates, { packageName, author, githubUsername, githubRepo, fullPackageName });
         await templateWriteAll(generated);
         await this.npmInstall();
         this.logger.write("Done\n");
-    }
-
-    public generateFromArgs(argv: string[]): Promise<void> {
-        const args = this.parseArgs(argv);
-        return this.generate(args);
     }
 
     private async npmInstall(): Promise<void> {
