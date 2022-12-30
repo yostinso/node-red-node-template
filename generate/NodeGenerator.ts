@@ -3,20 +3,74 @@ import { readFile, mkdir } from "fs/promises";
 import { copyIfNotExists } from "./fs_helpers";
 import { readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } from "./templateHelpers";
 import parseArgs from "./parseArgs";
+import { Logger } from "./Logger";
 
 export type NodeGeneratorArgs = {
     nodeName: string
     packageName: string
 }
 
+type PartialPlus<T, K extends keyof T> = Partial<T> & Required<Pick<T, K>>
+type PartialArgs = Partial<NodeGeneratorArgs>
+type PartialArgsPlus<K extends keyof PartialArgs> = PartialPlus<PartialArgs, K>
+
+type PartialPackageJson = {
+    packageName?: string
+    "node-red"?: {
+        nodes?: {
+            [fullNodeName: string]: string
+        }
+    }
+}
+
+function isArgv(args: unknown): args is string[] {
+    return (
+        Array.isArray(args) &&
+        args.every((e) => typeof e === "string")
+    );
+}
 export default class NodeGenerator {
+    logger: Logger;
+    args: NodeGeneratorArgs;
+    constructor(args: string[] | PartialArgs, logger: Logger) {
+        this.logger = logger;
+
+        if (isArgv(args)) { args = this.parseArgs(args) }
+        this.validateArgs(args);
+        this.args = args;
+    }
+
+    private parseArgs(argv: string[]): PartialArgs {
+        const { name: nodeName, packageName } = parseArgs(argv);
+        return { nodeName, packageName };
+    }
+
+    private validateArgs(args: unknown): asserts args is NodeGeneratorArgs {
+        if (typeof args !== "object" || args === null) {
+            throw new Error("Expected an arguments object");
+        }
+        this.checkNodeName(args);
+        this.checkPackageName(args);
+    }
+
+    private checkNodeName(args: PartialArgs): asserts args is PartialArgsPlus<"nodeName"> {
+        if (typeof args.nodeName !== "string" || args.nodeName.length == 0) {
+            throw new Error("You must provide at least a node name and packageName.");
+        }
+    }
+    private checkPackageName(args: PartialArgs): asserts args is PartialArgsPlus<"packageName"> {
+        if (typeof args.packageName !== "string" || args.packageName.length == 0) {
+            throw new Error("You must provide at least a node name and packageName.");
+        }
+    }
+
     public async generate(args: Partial<NodeGeneratorArgs>) {
         let { nodeName, packageName } = args;
-        if (!nodeName) { return Promise.reject("Must provide a node name!"); }
+        if (!nodeName) { return Promise.reject("Must provide a node name!") }
 
         let pkgJson = await this.getPackageJson();
         packageName ||= pkgJson.packageName;
-        if (!packageName) { return Promise.reject("Must provide a valid package name!"); }
+        if (!packageName) { return Promise.reject("Must provide a valid package name!") }
 
         pkgJson = this.addNodeToPkgJson(packageName, nodeName, pkgJson);
 
@@ -26,7 +80,7 @@ export default class NodeGenerator {
         console.log("Done");
     }
 
-    private addNodeToPkgJson(packageName: string, nodeName: string, pkgJson: any) {
+    private addNodeToPkgJson(packageName: string, nodeName: string, pkgJson: PartialPackageJson) {
         let nodeRed = pkgJson["node-red"] || {};
         let nodes = nodeRed.nodes || {};
         nodes = { ...nodes, [`${packageName}-${nodeName}`]: `dist/${packageName}-${nodeName}.js` };
@@ -35,7 +89,7 @@ export default class NodeGenerator {
         return pkgJson;
     }
 
-    private getPackageJson(): Promise<any> {
+    private getPackageJson(): Promise<PartialPackageJson> {
         return readFile("package.json", "utf8")
             .catch((err) => Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err))
             .then((json) => JSON.parse(json));
@@ -65,10 +119,5 @@ export default class NodeGenerator {
     public generateFromArgs(argv: string[]) {
         const args = this.parseArgs(argv);
         return this.generate(args);
-    }
-
-    private parseArgs(argv: string[]): NodeGeneratorArgs {
-        let { name: nodeName, packageName } = parseArgs(argv);
-        return { packageName, nodeName };
     }
 }

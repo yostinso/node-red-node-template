@@ -54,7 +54,7 @@ export class ExecutionHandler {
     }
 
     private handleNodeSubcommand(args: string[]): Promise<void> {
-        const generator = new NodeGenerator();
+        const generator = new NodeGenerator(args, this.logger);
         return generator.generateFromArgs(args);
     }
 

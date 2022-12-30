@@ -87,7 +87,7 @@ export default class PackageJsonGenerator {
     private checkPackageName(args: PartialArgs): asserts args is PartialArgsPlus<"packageName"> {
         if (!this.isValidArg(args.packageName)) {
             throw new Error(`You must provide at least a package name and author!
-                e.g. ./generate.js generate packageJson -name fancy-http -author "My Name <your@email.com>"\n`
+                e.g. ./generate.js generate packageJson -name fancy-http -author "My Name <your@email.com>"`
             );
         }
     }
@@ -95,7 +95,7 @@ export default class PackageJsonGenerator {
     private checkAuthorName(args: PartialArgs): asserts args is PartialArgsPlus<"author"> {
         if (!this.isValidArg(args.author)) {
             throw new Error(`You must provide at least a package name and author!
-                e.g. ./generate.js generate packageJson -name fancy-http -author "My Name <your@email.com>"\n`
+                e.g. ./generate.js generate packageJson -name fancy-http -author "My Name <your@email.com>"`
             );
         }
     }
@@ -104,14 +104,14 @@ export default class PackageJsonGenerator {
         args.scope = args.scope || args.author.match(/<([^>]+)@[^>]*>/)?.[1];
         args.fullPackageName = args.fullPackageName || `@${args.scope}/node-red-${args.packageName}`;
         if (!this.isValidArg(args.scope) || !this.isValidArg(args.fullPackageName)) {
-            throw new Error(`No scope provided, and unable to parse username from the author string.\n`);
+            throw new Error("No scope provided, and unable to parse username from the author string.");
         }
     }
 
     private validateGithubUsername(args: PartialArgsPlus<"author">): asserts args is PartialArgsPlus<"author" | "githubUsername"> {
         args.githubUsername = args.githubUsername || args.author.match(/<([^>]+)@[^>]*>/)?.[1];
         if (!this.isValidArg(args.githubUsername)) {
-            throw new Error(`No githubUsername provided and unable to parse it from the author string.\n`);
+            throw new Error("No githubUsername provided and unable to parse it from the author string.");
         }
     }
     private validateGithubRepo(args: PartialArgsPlus<"packageName">): asserts args is PartialArgsPlus<"packageName" | "githubRepo"> {
@@ -120,14 +120,14 @@ export default class PackageJsonGenerator {
     private validateRootPath(args: PartialArgs): asserts args is PartialArgsPlus<"rootPath"> {
         args.rootPath = args.rootPath || ".";
         if (!this.isValidArg(args.rootPath)) {
-            throw new Error(`Invalid rootPath provided.\n`);
+            throw new Error("Invalid rootPath provided.");
         }
         const dirStats = statSync(args.rootPath, { throwIfNoEntry: false });
         if (dirStats === undefined) {
-            throw new Error(`Invalid rootPath provided. Directory not found.\n`);
+            throw new Error("Invalid rootPath provided. Directory not found.");
         }
         if (!dirStats.isDirectory()) {
-            throw new Error(`Invalid rootPath provided. Must be a directory.\n`);
+            throw new Error("Invalid rootPath provided. Must be a directory.");
         }
     }
 }
