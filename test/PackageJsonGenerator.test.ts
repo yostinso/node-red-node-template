@@ -159,14 +159,16 @@ describe(PackageJsonGenerator, () => {
 
             expect(jest.mocked(templateWriteAll)).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    "package.json": expect.toMatchJSONObject({
+                    [`${tmpDir}/package.json`]: expect.toMatchJSONObject({
                         "name": "@test/test-package"
                     }),
-                    "tsconfig.json": expect.toMatchJSONObject({
+                    [`${tmpDir}/tsconfig.json`]: expect.toMatchJSONObject({
                         "compilerOptions": expect.any(Object)
                     })
                 })
             );
         });
+
+        it.todo("should actually write files to a temp dir");
     });
 });

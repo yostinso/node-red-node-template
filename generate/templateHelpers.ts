@@ -22,7 +22,7 @@ async function readNodeTemplates() {
 const PACKAGE_JSON_TEMPLATE = "./template/module/package.template.json";
 const TSCONFIG_JSON_TEMPLATE = "./template/module/tsconfig.template.json";
 
-async function readPackageTemplates() {
+async function readPackageTemplates(): Promise<Record<string, string>> {
     return {
         "package.json": await readFile(PACKAGE_JSON_TEMPLATE, "utf8"),
         "tsconfig.json": await readFile(TSCONFIG_JSON_TEMPLATE, "utf8"),
@@ -39,7 +39,7 @@ function templateReplace(template: string, object: Record<string, string>) {
     return result;
 }
 
-function templateReplaceAll(templates: { [templatePath: string]: string }, object: Record<string, string>): { [templatePath: string]: string } {
+function templateReplaceAll(templates: Record<string, string>, object: Record<string, string>): Record<string, string> {
     return Object.entries(templates).reduce((tmpl, [name, template]) => {
         const k = templateReplace(name, object),
               v = templateReplace(template, object);
@@ -47,8 +47,8 @@ function templateReplaceAll(templates: { [templatePath: string]: string }, objec
     }, {});
 }
 
-function addPathPrefixes(templates: { [templatePath: string]: string }, prefix: string): { [templatePath: string]: string } {
-    return Object.entries(templates).reduce((memo: { [templatePath: string]: string }, [k, v]) => {
+function addPathPrefixes(templates: Record<string, string>, prefix: string): Record<string, string> {
+    return Object.entries(templates).reduce((memo: Record<string, string>, [k, v]) => {
         const prefixPath = path.join(prefix, k);
         return {
             ...memo,
@@ -57,7 +57,7 @@ function addPathPrefixes(templates: { [templatePath: string]: string }, prefix: 
     }, {});
 }
 
-function templateWriteAll(generated: { [path: string]: string }, logCallback?: (msg: string) => void) {
+function templateWriteAll(generated: Record<string, string>, logCallback?: (msg: string) => void) {
     return Promise.all(
         Object.entries(generated).map(([filename, content]) => {
             if (logCallback) logCallback(`Generated ${filename}`);

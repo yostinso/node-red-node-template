@@ -41,8 +41,8 @@ export default class PackageJsonGenerator {
 
         const { packageName, author, githubUsername, githubRepo, fullPackageName } = this.args;
 
-        const templates = await readPackageTemplates();
-        addPathPrefixes(templates, this.args.rootPath);
+        let templates = await readPackageTemplates();
+        templates = addPathPrefixes(templates, this.args.rootPath);
 
         const generated = await templateReplaceAll(templates, { packageName, author, githubUsername, githubRepo, fullPackageName });
         await templateWriteAll(generated);
