@@ -12,10 +12,10 @@ jest.mock("../generate/templateHelpers", () => {
         ...original,
         addPathPrefixes: jest.fn().mockImplementation(original.addPathPrefixes), 
         templateReplaceAll: jest.fn().mockImplementation(original.templateReplaceAll), 
-        templateWriteAll: jest.fn(),
-        _templateWriteAll: original.templateWriteAll
+        templateWriteAll: jest.fn()
     };
 });
+const { templateWriteAll: _templateWriteAll } = jest.requireActual("../generate/templateHelpers");
 
 let logMessages = "";
 const logger = {
@@ -33,7 +33,7 @@ describe(PackageJsonGenerator, () => {
         beforeEach(() => { generateMock.mockClear() });
         afterAll(() => generateMock.mockRestore());
 
-        it("it should print an error on bad arguments", () => {
+        it("should print an error on bad arguments", () => {
             const args = [
                 "--bogus", "package-name",
                 "--author", "author@email.com"
@@ -42,7 +42,7 @@ describe(PackageJsonGenerator, () => {
                 new PackageJsonGenerator(args, logger);
             }).toThrow(/provide at least a package name and author/);
         });
-        it("it should parse minimal args", async () => {
+        it("should parse minimal args", async () => {
             const expected: Omit<PackageJsonGeneratorArgs, "rootPath" | "scope"> = {
                 author: "Test User <author@email.com>",
                 packageName: "package-name",
@@ -65,7 +65,7 @@ describe(PackageJsonGenerator, () => {
                 expect.objectContaining(expected)
             );
         });
-        it("it should parse complete args", async () => {
+        it("should parse complete args", async () => {
             const expected: PackageJsonGeneratorArgs = {
                 author: "Test User <author@email.com>",
                 packageName: "package-name",
@@ -87,7 +87,7 @@ describe(PackageJsonGenerator, () => {
             const generator = new PackageJsonGenerator(args, logger);
             expect(generator.args).toMatchObject(expected);
         });
-        it("it should print an error on bad Github username", () => {
+        it("should print an error on bad Github username", () => {
             const args = [
                 "--name", "package-name",
                 "--author", "Test User <>",
@@ -97,7 +97,7 @@ describe(PackageJsonGenerator, () => {
                 () => new PackageJsonGenerator(args, logger)
             ).toThrow(/No githubUsername/);
         });
-        it("it should print an error on bad scope", () => {
+        it("should print an error on bad scope", () => {
             const args = [
                 "--name", "package-name",
                 "--author", "Test User <>"
@@ -106,7 +106,7 @@ describe(PackageJsonGenerator, () => {
                 () => new PackageJsonGenerator(args, logger)
             ).toThrow(/No scope provided/);
         });
-        it("it should print an error on missing rootPath", () => {
+        it("should print an error on missing rootPath", () => {
             const args = [
                 "--name", "package-name",
                 "--author", "Test User <author@email.com>",
@@ -116,7 +116,7 @@ describe(PackageJsonGenerator, () => {
                 () => new PackageJsonGenerator(args, logger)
             ).toThrow(/Invalid rootPath .* Directory not found/);
         });
-        it("it should print an error on non-folder rootPath", () => {
+        it("should print an error on non-folder rootPath", () => {
             const args = [
                 "--name", "package-name",
                 "--author", "Test User <author@email.com>",
@@ -125,6 +125,12 @@ describe(PackageJsonGenerator, () => {
             expect(
                 () => new PackageJsonGenerator(args, logger)
             ).toThrow(/Invalid rootPath .* Must be a directory/);
+        });
+        it("should error on a bogus args argument", () => {
+            const args = "what" as unknown as string[];
+            expect(
+                () => new PackageJsonGenerator(args, logger)
+            ).toThrow(/Expected an arguments object/);
         });
     });
 
@@ -150,12 +156,14 @@ describe(PackageJsonGenerator, () => {
                 scope: "test",
                 rootPath: tmpDir
             };
+            /*
             const npmI = jest.spyOn(PackageJsonGenerator.prototype as unknown as { npmInstall: () => Promise<void> }, "npmInstall");
             npmI.mockImplementation(jest.fn());
+            expect(npmI).toBeCalledTimes(1);
+            */
 
             const generator = new PackageJsonGenerator(args, logger);
             await generator.generate();
-            expect(npmI).toBeCalledTimes(1);
 
             expect(jest.mocked(templateWriteAll)).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -169,6 +177,43 @@ describe(PackageJsonGenerator, () => {
             );
         });
 
-        it.todo("should actually write files to a temp dir");
+        describe("when writing isn't mocked", () => {
+            beforeAll(() => {
+                jest.mocked(templateWriteAll).mockImplementation(_templateWriteAll);
+            });
+            afterAll(() => {
+                jest.mocked(templateWriteAll).mockImplementation(jest.fn());
+            });
+
+            it("should actually write files to a temp dir", async () => {
+                const args: PackageJsonGeneratorArgs = {
+                    author: "testuser@gmail.com",
+                    packageName: "test-package",
+                    githubUsername: "testuser",
+                    fullPackageName: "@test/test-package",
+                    githubRepo: "test-package-repo",
+                    scope: "test",
+                    rootPath: tmpDir
+                };
+
+                const generator = new PackageJsonGenerator(args, logger);
+                await generator.generate();
+
+                expect(await fs.stat(tmpDir)).not.toBeFalsy();
+                const files = await fs.readdir(tmpDir, "utf-8");
+                expect(files).toContain("package.json");
+                expect(files).toContain("tsconfig.json");
+                
+                const packageJson = await fs.readFile(path.join(tmpDir, "package.json"), "utf-8");
+                expect(packageJson).toMatchJSONObject({
+                    "name": "@test/test-package"
+                });
+
+                const tsConfigJson = await fs.readFile(path.join(tmpDir, "tsconfig.json"), "utf-8");
+                expect(tsConfigJson).toMatchJSONObject({
+                    "compilerOptions": expect.any(Object)
+                });
+            });
+        });
     });
 });

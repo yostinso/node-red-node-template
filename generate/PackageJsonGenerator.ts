@@ -46,7 +46,7 @@ export default class PackageJsonGenerator {
 
         const generated = await templateReplaceAll(templates, { packageName, author, githubUsername, githubRepo, fullPackageName });
         await templateWriteAll(generated);
-        await this.npmInstall();
+        //await this.npmInstall();
         this.logger.write("Done\n");
     }
 
