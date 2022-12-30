@@ -146,7 +146,7 @@ describe(PackageJsonGenerator, () => {
             }
         });
 
-        it("should try to write out generated templates", async () => {
+        it("should try to write out generated package/tsconfig templates", async () => {
             const args: PackageJsonGeneratorArgs = {
                 author: "testuser@gmail.com",
                 packageName: "test-package",
@@ -185,7 +185,7 @@ describe(PackageJsonGenerator, () => {
                 jest.mocked(templateWriteAll).mockImplementation(jest.fn());
             });
 
-            it("should actually write files to a temp dir", async () => {
+            it("should actually write the package/tsconfig files to a temp dir", async () => {
                 const args: PackageJsonGeneratorArgs = {
                     author: "testuser@gmail.com",
                     packageName: "test-package",
