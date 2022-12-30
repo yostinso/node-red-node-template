@@ -1,16 +1,18 @@
-import { it, describe, expect } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
+import * as fs from "fs/promises";
+import * as os from "os";
+import path from "path";
 import PackageJsonGenerator, { PackageJsonGeneratorArgs } from "../generate/PackageJsonGenerator";
-/*
 import { templateWriteAll } from "../generate/templateHelpers";
-jest.mock("../generate/template_helpers", () => {
+import "./util";
+
+jest.mock("../generate/templateHelpers", () => {
     const original = jest.requireActual("../generate/templateHelpers");
     return {
-        __esModule: true,
         ...original,
         templateWriteAll: jest.fn()
     };
 });
-*/
 
 let logMessages = "";
 const logger = {
@@ -124,22 +126,45 @@ describe(PackageJsonGenerator, () => {
         });
     });
 
-    /*
     describe("generate", () => {
-        it("it should generate templates", () => {
+        let tmpDir = os.tmpdir();
+        beforeAll(async () => {
+            const prefix = path.join(os.tmpdir(), "test-generate");
+            tmpDir = await fs.mkdtemp(prefix);
+        });
+        afterAll(async () => {
+            if (tmpDir != os.tmpdir()) {
+                fs.rm(tmpDir, { recursive: true });
+            }
+        });
+
+        it("it should try to write out generated templates", async () => {
             const args: PackageJsonGeneratorArgs = {
                 author: "testuser@gmail.com",
                 packageName: "test-package",
                 githubUsername: "testuser",
                 fullPackageName: "@test/test-package",
                 githubRepo: "test-package-repo",
-                scope: "test"
+                scope: "test",
+                rootPath: tmpDir
             };
+            const npmI = jest.spyOn(PackageJsonGenerator.prototype as unknown as { npmInstall: () => Promise<void> }, "npmInstall");
+            npmI.mockImplementation(jest.fn());
 
             const generator = new PackageJsonGenerator(logger);
-            generator.generate(args);
-            expect(jest.mocked(templateWriteAll)).toBeCalledWith("derp");
+            await generator.generate(args);
+            expect(npmI).toBeCalledTimes(1);
+
+            expect(jest.mocked(templateWriteAll)).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    "package.json": expect.toMatchJSONObject({
+                        "name": "@test/test-package"
+                    }),
+                    "tsconfig.json": expect.toMatchJSONObject({
+                        "compilerOptions": expect.any(Object)
+                    })
+                })
+            );
         });
     });
-    */
 });
