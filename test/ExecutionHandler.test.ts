@@ -103,10 +103,12 @@ describe(ExecutionHandler, () => {
                 const args = ["generate", "node", "extra", "args"];
                 const executer = new ExecutionHandler(logger);
 
+                const mockGenerate = jest.spyOn(NodeGenerator.prototype, "generate").mockImplementationOnce(jest.fn());
+
                 executer.handleArguments(args);
 
-                expect(MockedNodeGenerator).toHaveBeenCalledTimes(1);
-                expect(MockedNodeGenerator.mock.instances[0].generateFromArgs).toHaveBeenCalledWith(["extra", "args"]);
+                expect(MockedNodeGenerator).toHaveBeenCalledWith(["extra", "args"], expect.anything());
+                expect(mockGenerate).toHaveBeenCalledTimes(1);
             });
         });
     });

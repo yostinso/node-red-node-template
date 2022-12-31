@@ -9,7 +9,7 @@ const LOCALE_TEMPLATE = "./template/locales/en-US/locale.template.json" as const
 const ICONS_FOLDER = "./template/icons" as const;
 const NODE_ICON = `${ICONS_FOLDER}/home.svg` as const;
 
-async function readNodeTemplates() {
+async function readNodeTemplates(): Promise<Record<string, string>> {
     return {
         "${packageName}/${packageName}-${nodeName}.ts": await readFile(NODE_TS_TEMPLATE, "utf8"),
         "${packageName}/views/${packageName}-${nodeName}.ts": await readFile(NODE_VIEW_TS_TEMPLATE, "utf8"),

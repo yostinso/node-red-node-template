@@ -2,7 +2,8 @@ import { describe, expect, it } from "@jest/globals";
 import * as fs from "fs/promises";
 import * as os from "os";
 import path from "path";
-import PackageJsonGenerator, { PackageJsonGeneratorArgs } from "../generate/PackageJsonGenerator";
+import PackageJsonGenerator from "../generate/PackageJsonGenerator";
+import PackageJsonGeneratorArgs from "../generate/args/PackageJsonGeneratorArgs";
 import { templateWriteAll, addPathPrefixes, templateReplaceAll } from "../generate/templateHelpers";
 import "./util";
 
@@ -28,11 +29,7 @@ const logger = {
 describe(PackageJsonGenerator, () => {
     beforeEach(() => { logMessages = "" });
 
-    describe("generateFromArgs", () => {
-        const generateMock = jest.spyOn(PackageJsonGenerator.prototype, "generate");
-        beforeEach(() => { generateMock.mockClear() });
-        afterAll(() => generateMock.mockRestore());
-
+    describe("constructor", () => {
         it("should print an error on bad arguments", () => {
             const args = [
                 "--bogus", "package-name",
@@ -66,7 +63,7 @@ describe(PackageJsonGenerator, () => {
             );
         });
         it("should parse complete args", async () => {
-            const expected: PackageJsonGeneratorArgs = {
+            const expected = {
                 author: "Test User <author@email.com>",
                 packageName: "package-name",
                 githubUsername: "custom-author",
@@ -142,12 +139,12 @@ describe(PackageJsonGenerator, () => {
         });
         afterAll(async () => {
             if (tmpDir != os.tmpdir()) {
-                fs.rm(tmpDir, { recursive: true });
+                await fs.rm(tmpDir, { recursive: true });
             }
         });
 
         it("should try to write out generated package/tsconfig templates", async () => {
-            const args: PackageJsonGeneratorArgs = {
+            const args = {
                 author: "testuser@gmail.com",
                 packageName: "test-package",
                 githubUsername: "testuser",
@@ -186,7 +183,7 @@ describe(PackageJsonGenerator, () => {
             });
 
             it("should actually write the package/tsconfig files to a temp dir", async () => {
-                const args: PackageJsonGeneratorArgs = {
+                const args = {
                     author: "testuser@gmail.com",
                     packageName: "test-package",
                     githubUsername: "testuser",

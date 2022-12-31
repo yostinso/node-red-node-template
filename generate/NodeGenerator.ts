@@ -2,17 +2,9 @@
 import { readFile, mkdir } from "fs/promises";
 import { copyIfNotExists } from "./fs_helpers";
 import { readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } from "./templateHelpers";
-import parseArgs from "./parseArgs";
 import { Logger } from "./Logger";
-
-export type NodeGeneratorArgs = {
-    nodeName: string
-    packageName: string
-}
-
-type PartialPlus<T, K extends keyof T> = Partial<T> & Required<Pick<T, K>>
-type PartialArgs = Partial<NodeGeneratorArgs>
-type PartialArgsPlus<K extends keyof PartialArgs> = PartialPlus<PartialArgs, K>
+import NodeGeneratorArgs, { PartialArgs } from "./args/NodeGeneratorArgs";
+import path from "path";
 
 type PartialPackageJson = {
     packageName?: string
@@ -23,50 +15,16 @@ type PartialPackageJson = {
     }
 }
 
-function isArgv(args: unknown): args is string[] {
-    return (
-        Array.isArray(args) &&
-        args.every((e) => typeof e === "string")
-    );
-}
 export default class NodeGenerator {
     logger: Logger;
     args: NodeGeneratorArgs;
     constructor(args: string[] | PartialArgs, logger: Logger) {
         this.logger = logger;
-
-        if (isArgv(args)) { args = this.parseArgs(args) }
-        this.validateArgs(args);
-        this.args = args;
+        this.args = new NodeGeneratorArgs(args);
     }
 
-    private parseArgs(argv: string[]): PartialArgs {
-        const { name: nodeName, packageName } = parseArgs(argv);
-        return { nodeName, packageName };
-    }
-
-    private validateArgs(args: unknown): asserts args is NodeGeneratorArgs {
-        if (typeof args !== "object" || args === null) {
-            throw new Error("Expected an arguments object");
-        }
-        this.checkNodeName(args);
-        this.checkPackageName(args);
-    }
-
-    private checkNodeName(args: PartialArgs): asserts args is PartialArgsPlus<"nodeName"> {
-        if (typeof args.nodeName !== "string" || args.nodeName.length == 0) {
-            throw new Error("You must provide at least a node name and packageName.");
-        }
-    }
-    private checkPackageName(args: PartialArgs): asserts args is PartialArgsPlus<"packageName"> {
-        if (typeof args.packageName !== "string" || args.packageName.length == 0) {
-            throw new Error("You must provide at least a node name and packageName.");
-        }
-    }
-
-    public async generate(args: Partial<NodeGeneratorArgs>) {
-        let { nodeName, packageName } = args;
-        if (!nodeName) { return Promise.reject("Must provide a node name!") }
+    public async generate() {
+        let { nodeName, packageName, rootPath } = this.args;
 
         let pkgJson = await this.getPackageJson();
         packageName ||= pkgJson.packageName;
@@ -74,10 +32,11 @@ export default class NodeGenerator {
 
         pkgJson = this.addNodeToPkgJson(packageName, nodeName, pkgJson);
 
-        await writeJson("package.json", pkgJson);
+        const packageJsonPath = path.join(rootPath, "package.json");
+        await writeJson(packageJsonPath, pkgJson);
         await this.generateNodeViews(packageName, nodeName);
 
-        console.log("Done");
+        this.logger.write("Done\n");
     }
 
     private addNodeToPkgJson(packageName: string, nodeName: string, pkgJson: PartialPackageJson) {
@@ -92,7 +51,7 @@ export default class NodeGenerator {
     private getPackageJson(): Promise<PartialPackageJson> {
         return readFile("package.json", "utf8")
             .catch((err) => Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err))
-            .then((json) => JSON.parse(json));
+            .then((json) => JSON.parse(json)).catch(() => Promise.reject("Unable to parse package.json"));
     }
 
     private generateNodeViews(packageName: string, nodeName: string) {
@@ -103,10 +62,10 @@ export default class NodeGenerator {
             .then(() => {
                 return Promise.all([
                     copyIfNotExists("template/views/tsconfig.template.json", `${packageName}/views/tsconfig.json`).then(([copied, src, dest]) => {
-                        copied ? console.log(`Copied ${src} to ${dest}`) : console.log(`${dest} already exists`);
+                        copied ? this.logger.write(`Copied ${src} to ${dest}\n`) : this.logger.write(`${dest} already exists\n`);
                     }),
                     copyIfNotExists(NODE_ICON, `${packageName}/icons/`).then(([copied, src, dest]) => {
-                        copied ? console.log(`Copied ${src} to ${dest}`) : console.log(`${dest} already exists`);
+                        copied ? this.logger.write(`Copied ${src} to ${dest}\n`) : this.logger.write(`${dest} already exists\n`);
                     }),
                 ]);
             })
@@ -114,10 +73,5 @@ export default class NodeGenerator {
             .then(() => readNodeTemplates())
             .then((templates) => templateReplaceAll(templates, { nodeName, packageName, nodeClass }))
             .then((generated) => templateWriteAll(generated));
-    }
-
-    public generateFromArgs(argv: string[]) {
-        const args = this.parseArgs(argv);
-        return this.generate(args);
     }
 }
