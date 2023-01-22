@@ -1,10 +1,10 @@
-"use strict";
-import { readFile, mkdir } from "fs/promises";
-import { copyIfNotExists } from "./fs_helpers";
-import { readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson, NODE_ICON } from "./templateHelpers";
-import { Logger } from "./Logger";
-import NodeGeneratorArgs, { PartialArgs } from "./args/NodeGeneratorArgs";
+import { mkdir, readFile } from "fs/promises";
 import path from "path";
+import NodeGeneratorArgs, { PartialArgs } from "./args/node-generator-args.js";
+import { copyIfNotExists } from "./fs_helpers.js";
+import { Logger } from "./logger.js";
+import Runner from "./runner.js";
+import { NODE_ICON, readNodeTemplates, templateReplaceAll, templateWriteAll, writeJson } from "./template-helpers.js";
 
 type PartialPackageJson = {
     packageName?: string
@@ -15,7 +15,7 @@ type PartialPackageJson = {
     }
 }
 
-export default class NodeGenerator {
+export default class NodeGenerator implements Runner {
     logger: Logger;
     args: NodeGeneratorArgs;
     constructor(args: string[] | PartialArgs, logger: Logger) {
@@ -23,7 +23,7 @@ export default class NodeGenerator {
         this.args = new NodeGeneratorArgs(args);
     }
 
-    public async generate() {
+    public async run() {
         let { nodeName, packageName, rootPath } = this.args;
 
         let pkgJson = await this.getPackageJson();
@@ -48,10 +48,17 @@ export default class NodeGenerator {
         return pkgJson;
     }
 
-    private getPackageJson(): Promise<PartialPackageJson> {
+    private async getPackageJson(): Promise<PartialPackageJson> {
         return readFile("package.json", "utf8")
-            .catch((err) => Promise.reject(err.code == "ENOENT" ? "Must generate package.json first!" : err))
-            .then((json) => JSON.parse(json)).catch(() => Promise.reject("Unable to parse package.json"));
+            .then((json) => JSON.parse(json)).catch((err) => {
+                if (err.code == "ENOENT") {
+                    return Promise.reject("Must generate package.json first!");
+                } else if (err.code !== undefined) {
+                    return Promise.reject(err);
+                } else {
+                    return Promise.reject("Unable to parse package.json");
+                }
+            });
     }
 
     private generateNodeViews(packageName: string, nodeName: string) {

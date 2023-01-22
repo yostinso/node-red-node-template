@@ -1,6 +1,6 @@
 import { statSync } from "fs";
-import parseArgs from "../parseArgs";
-import { FieldsOfArgs, PartialArgs as GenericPartialArgs, PartialArgsPlus as GenericPartialArgsPlus } from "./PartialArgs";
+import parseArgs from "../parse-args.js";
+import { FieldsOfArgs, PartialArgs as GenericPartialArgs, PartialArgsPlus as GenericPartialArgsPlus } from "./partial-args.js";
 
 export type PartialArgs = GenericPartialArgs<NodeGeneratorArgs>
 type PartialArgsPlus<K extends keyof NodeGeneratorArgs> = GenericPartialArgsPlus<NodeGeneratorArgs, K>

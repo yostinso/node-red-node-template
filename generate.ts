@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-"use strict";
-import { printHelp } from "./generate/printHelp";
-import { ExecutionHandler } from "./generate/ExecutionHandler";
+import { printHelp } from "./generate/print-help.js";
+import { ExecutionHandler } from "./generate/execution-handler.js";
 
 
 function main() {
     const executer = new ExecutionHandler();
-    executer.handleArguments(process.argv.slice(2));
-    return Promise.resolve();
+    const runner = executer.handleArguments(process.argv.slice(2));
+    return runner ? runner.run() : Promise.resolve();
 }
 
 main().catch((err) => {

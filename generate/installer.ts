@@ -3,8 +3,9 @@ import { spawn } from "child_process";
 import { Stats } from "fs";
 import { readFile, stat, writeFile } from "fs/promises";
 import { PackageJson } from "./package-json";
+import Runner from "./runner.js";
 
-export default class Installer {
+export default class Installer implements Runner {
     private createPackageJsonIfNotExists(): Promise<void | Stats> {
         return stat("/data/package.json").catch((err) => {
             if (err.code == "ENOENT") {
@@ -55,7 +56,7 @@ export default class Installer {
         });
     }
 
-    async install() {
+    async run() {
         await this.createPackageJsonIfNotExists();
         const packageJson = await this.getPackageJson();
         const installed = this.isInstalled(packageJson);

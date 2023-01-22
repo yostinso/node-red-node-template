@@ -1,5 +1,5 @@
-import { describe, it, expect } from "@jest/globals";
-import "./util";
+import { describe, it, expect } from "vitest";
+import "./util.js";
 
 describe("toMatchJSONObject", () => {
     it("should error on a non-string actual value", () => {
@@ -21,7 +21,7 @@ describe("toMatchJSONObject", () => {
         const actual = `{ "a": 1, "b": 2 }`;
         expect(
             () => expect(actual).toMatchJSONObject(expected)
-        ).toThrow(/-.*"a": 3/);
+        ).toThrow(/toMatchJSONObject.*\n.*"a": 3/);
     });
     it("should succeed on a matched object", () => {
         const expected = { a: 1 };

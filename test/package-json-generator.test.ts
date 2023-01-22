@@ -1,32 +1,33 @@
-import { describe, expect, it } from "@jest/globals";
 import * as fs from "fs/promises";
 import * as os from "os";
 import path from "path";
-import PackageJsonGenerator from "../generate/PackageJsonGenerator";
-import PackageJsonGeneratorArgs from "../generate/args/PackageJsonGeneratorArgs";
-import { templateWriteAll, addPathPrefixes, templateReplaceAll } from "../generate/templateHelpers";
-import "./util";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import PackageJsonGeneratorArgs from "../generate/args/package-json-generator-args.js";
+import PackageJsonGenerator from "../generate/package-json-generator.js";
+import * as templateHelpersType from "../generate/template-helpers.js";
+import { addPathPrefixes, templateReplaceAll, templateWriteAll } from "../generate/template-helpers.js";
+import "./util.js";
 
-jest.mock("../generate/templateHelpers", () => {
-    const original = jest.requireActual("../generate/templateHelpers");
+vi.mock("../generate/template-helpers.js", async () => {
+    const original = (await vi.importActual("../generate/template-helpers.js")) as typeof templateHelpersType;
     return {
         ...original,
-        addPathPrefixes: jest.fn().mockImplementation(original.addPathPrefixes), 
-        templateReplaceAll: jest.fn().mockImplementation(original.templateReplaceAll), 
-        templateWriteAll: jest.fn()
+        addPathPrefixes: vi.fn().mockImplementation(original.addPathPrefixes), 
+        templateReplaceAll: vi.fn().mockImplementation(original.templateReplaceAll), 
+        templateWriteAll: vi.fn()
     };
 });
-const { templateWriteAll: _templateWriteAll } = jest.requireActual("../generate/templateHelpers");
+const { templateWriteAll: _templateWriteAll } = (await vi.importActual("../generate/template-helpers.js")) as typeof templateHelpersType;
 
 let logMessages = "";
 const logger = {
-    write: jest.fn((message: string) => {
+    write: vi.fn((message: string) => {
         logMessages = logMessages + message;
         return true;
     })
 };
 
-describe(PackageJsonGenerator, () => {
+describe("PackageJsonGenerator", () => {
     beforeEach(() => { logMessages = "" });
 
     describe("constructor", () => {
@@ -54,7 +55,7 @@ describe(PackageJsonGenerator, () => {
             ];
             const generator = new PackageJsonGenerator(args, logger);
 
-            await generator.generate();
+            await generator.run();
             
             expect(addPathPrefixes).toBeCalledWith(expect.anything(), expectedRootPath);
             expect(templateReplaceAll).toBeCalledWith(
@@ -154,15 +155,15 @@ describe(PackageJsonGenerator, () => {
                 rootPath: tmpDir
             };
             /*
-            const npmI = jest.spyOn(PackageJsonGenerator.prototype as unknown as { npmInstall: () => Promise<void> }, "npmInstall");
-            npmI.mockImplementation(jest.fn());
+            const npmI = vi.spyOn(PackageJsonGenerator.prototype as unknown as { npmInstall: () => Promise<void> }, "npmInstall");
+            npmI.mockImplementation(vi.fn());
             expect(npmI).toBeCalledTimes(1);
             */
 
             const generator = new PackageJsonGenerator(args, logger);
-            await generator.generate();
+            await generator.run();
 
-            expect(jest.mocked(templateWriteAll)).toHaveBeenCalledWith(
+            expect(vi.mocked(templateWriteAll)).toHaveBeenCalledWith(
                 expect.objectContaining({
                     [`${tmpDir}/package.json`]: expect.toMatchJSONObject({
                         "name": "@test/test-package"
@@ -176,10 +177,10 @@ describe(PackageJsonGenerator, () => {
 
         describe("when writing isn't mocked", () => {
             beforeAll(() => {
-                jest.mocked(templateWriteAll).mockImplementation(_templateWriteAll);
+                vi.mocked(templateWriteAll).mockImplementation(_templateWriteAll);
             });
             afterAll(() => {
-                jest.mocked(templateWriteAll).mockImplementation(jest.fn());
+                vi.mocked(templateWriteAll).mockImplementation(vi.fn<Promise<void>[]>());
             });
 
             it("should actually write the package/tsconfig files to a temp dir", async () => {
@@ -194,7 +195,7 @@ describe(PackageJsonGenerator, () => {
                 };
 
                 const generator = new PackageJsonGenerator(args, logger);
-                await generator.generate();
+                await generator.run();
 
                 expect(await fs.stat(tmpDir)).not.toBeFalsy();
                 const files = await fs.readdir(tmpDir, "utf-8");

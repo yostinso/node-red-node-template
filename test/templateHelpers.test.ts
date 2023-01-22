@@ -1,16 +1,17 @@
-import { it, describe, expect } from "@jest/globals";
-import { readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson, addPathPrefixes } from "../generate/templateHelpers";
-import { writeFile } from "fs/promises";
+import { it, describe, expect, vi, afterEach } from "vitest";
+import { readPackageTemplates, templateReplaceAll, templateWriteAll, writeJson, addPathPrefixes } from "../generate/template-helpers.js";
+import * as fs from "fs/promises";
+const { writeFile } = fs;
 
-jest.mock("fs/promises", () => {
-    const original = jest.requireActual("fs/promises");
+vi.mock("fs/promises", async () => {
+    const original = await vi.importActual("fs/promises") as typeof fs;
     return {
         ...original,
-        writeFile: jest.fn()
+        writeFile: vi.fn()
     };
 });
 
-describe(readPackageTemplates, () => {
+describe("readPackageTemplates", () => {
     it("reads package templates", async () => {
         const result = await readPackageTemplates();
         expect(result).toMatchObject({
@@ -27,7 +28,7 @@ describe(readPackageTemplates, () => {
     });
 });
 
-describe(templateReplaceAll, () => {
+describe("templateReplaceAll", () => {
     it("naively search-and-replaces variables by name", async () => {
         const template = JSON.stringify({
             test: "${variable1}",
@@ -47,7 +48,7 @@ describe(templateReplaceAll, () => {
     });
 });
 
-describe(addPathPrefixes, () => {
+describe("addPathPrefixes", () => {
     it("should update the paths in the template keys with the provided prefix", () => {
         const templates = { "path1.json": "1", "path2.json": "2" };
         const prefix = "some/prefix";
@@ -60,10 +61,12 @@ describe(addPathPrefixes, () => {
 });
 
 describe("write methods", () => {
-    const mockedWriteFile = jest.mocked(writeFile);
-    afterEach(() => mockedWriteFile.mockClear());
+    const mockedWriteFile = vi.mocked(writeFile);
+    afterEach(() => {
+        mockedWriteFile.mockClear();
+    });
 
-    describe(templateWriteAll, () => {
+    describe("templateWriteAll", () => {
         it("reads package templates", async () => {
             const templateContents = JSON.stringify({ test: "one" });
             const templates = {
@@ -75,7 +78,7 @@ describe("write methods", () => {
         it("logs messages to an optional callback", async () => {
             const templateContents = JSON.stringify({ test: "one" });
             const templates = { "some/path": templateContents };
-            const callback = jest.fn();
+            const callback = vi.fn();
 
             await templateWriteAll(templates, callback);
 
@@ -83,14 +86,14 @@ describe("write methods", () => {
         });
     });
 
-    describe(writeJson, () => {
+    describe("writeJson", () => {
         it("writes JSON to a file as a formatted string", async () => {
             const obj = { one: "two" };
             const expected = `{\n    "one": "two"\n}`;
 
             await writeJson("some/path", obj);
 
-            const mockedWriteFile = jest.mocked(writeFile);
+            const mockedWriteFile = vi.mocked(writeFile);
             expect(mockedWriteFile).toBeCalledWith("some/path", expected);
         });
     });

@@ -1,36 +1,35 @@
-import { it, describe, expect } from "@jest/globals";
-import { writeJson } from "../generate/templateHelpers";
-import NodeGenerator from "../generate/NodeGenerator";
+import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
-import * as fs from "fs/promises";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, SpyInstance, vi } from "vitest";
+import NodeGenerator from "../generate/node-generator.js";
+import { writeJson } from "../generate/template-helpers.js";
 
-jest.mock("../generate/templateHelpers", () => {
-    const original = jest.requireActual("../generate/templateHelpers");
+vi.mock("../generate/template-helpers.js", () => {
+    const original = vi.importActual("../generate/template-helpers.js");
     return {
         ...original,
-        writeJson: jest.fn()
+        writeJson: vi.fn()
     };
 });
-const { writeJson: _writeJson } = jest.requireActual("../generate/templateHelpers");
-jest.mock("fs/promises", () => {
-    const original = jest.requireActual("fs/promises");
+vi.mock("fs/promises", async () => {
+    const original = (await vi.importActual("fs/promises")) as typeof fs;
     return {
         ...original,
-        readFile: jest.fn().mockImplementation(original.readFile)
+        readFile: vi.fn().mockImplementation(original.readFile)
     };
 });
-const { readFile: _readFile } = jest.requireActual("fs/promises");
+const { readFile: _readFile } = (await vi.importActual("fs/promises")) as typeof fs;
 
 let logMessages = "";
 const logger = {
-    write: jest.fn((message: string) => {
+    write: vi.fn((message: string) => {
         logMessages = logMessages + message;
         return true;
     })
 };
 
-describe(NodeGenerator, () => {
+describe("NodeGenerator", () => {
     beforeEach(() => { logMessages = "" });
     describe("constructor", () => {
         it("should print an error on a missing node name", () => {
@@ -109,13 +108,31 @@ describe(NodeGenerator, () => {
             }
         });
         describe("package.json without views", () => {
-            let mockedGenerateNodeViews: jest.SpyInstance<Promise<void[]>, []>;
+            let mockedGenerateNodeViews: SpyInstance<[], Promise<void[]>>;
             beforeEach(() => {
-                mockedGenerateNodeViews = jest.spyOn(NodeGenerator.prototype as unknown as { generateNodeViews: () => Promise<void[]> }, "generateNodeViews");
-                mockedGenerateNodeViews.mockImplementation(jest.fn());
+                mockedGenerateNodeViews = vi.spyOn(NodeGenerator.prototype as unknown as { generateNodeViews: () => Promise<void[]> }, "generateNodeViews");
+                mockedGenerateNodeViews.mockImplementation(vi.fn<Promise<void>[]>());
             });
             afterEach(() => {
                 mockedGenerateNodeViews.mockReset();
+            });
+
+            it("should error if package.json doesn't exist", async () => {
+                const args = {
+                    nodeName: "node-name",
+                    packageName: "package-name",
+                    rootPath: os.tmpdir()
+                };
+                const generator = new NodeGenerator(args, logger);
+
+                vi.mocked(fs.readFile).mockRejectedValueOnce({ code: "ENOENT" });
+                await expect(generator.run()).rejects.toMatch(/Must generate package.json first/);
+
+                vi.mocked(fs.readFile).mockRejectedValueOnce({ code: "123" });
+                await expect(generator.run()).rejects.toEqual({ code: "123" });
+
+                vi.mocked(fs.readFile).mockRejectedValueOnce({ other: "thing" });
+                await expect(generator.run()).rejects.toMatch(/Unable to parse/);
             });
 
             it("should add the new node to package.json if it doesn't exist", async () => {
@@ -127,9 +144,9 @@ describe(NodeGenerator, () => {
                 const expectedJsonPath = path.join(os.tmpdir(), "package.json");
 
                 const generator = new NodeGenerator(args, logger);
-                await generator.generate();
+                await generator.run();
 
-                expect(jest.mocked(writeJson)).toBeCalledWith(
+                expect(vi.mocked(writeJson)).toBeCalledWith(
                     expectedJsonPath,
                     expect.objectContaining({
                         "node-red": {
@@ -154,7 +171,7 @@ describe(NodeGenerator, () => {
                 };
                 const expectedJsonPath = path.join(os.tmpdir(), "package.json");
 
-                jest.mocked(fs.readFile).mockImplementationOnce((path, options) => {
+                vi.mocked(fs.readFile).mockImplementationOnce((path, options) => {
                     if (typeof path === "string" && path.match("package.json")) {
                         return Promise.resolve(JSON.stringify(fakePackageJson));
                     } else {
@@ -163,9 +180,9 @@ describe(NodeGenerator, () => {
                 });
 
                 const generator = new NodeGenerator(args, logger);
-                await generator.generate();
+                await generator.run();
 
-                expect(jest.mocked(writeJson)).toBeCalledWith(
+                expect(vi.mocked(writeJson)).toBeCalledWith(
                     expectedJsonPath,
                     expect.objectContaining({
                         "node-red": {
@@ -190,7 +207,7 @@ describe(NodeGenerator, () => {
                 };
                 const expectedJsonPath = path.join(os.tmpdir(), "package.json");
 
-                jest.mocked(fs.readFile).mockImplementation((path, options) => {
+                vi.mocked(fs.readFile).mockImplementation((path, options) => {
                     if (typeof path === "string" && path.match("package.json")) {
                         return Promise.resolve(JSON.stringify(fakePackageJson));
                     } else {
@@ -199,9 +216,9 @@ describe(NodeGenerator, () => {
                 });
 
                 const generator = new NodeGenerator(args, logger);
-                await generator.generate();
+                await generator.run();
 
-                expect(jest.mocked(writeJson)).toBeCalledWith(
+                expect(vi.mocked(writeJson)).toBeCalledWith(
                     expectedJsonPath,
                     expect.objectContaining({
                         "node-red": {
@@ -223,7 +240,7 @@ describe(NodeGenerator, () => {
                 const fakePackageJson = {};
                 const expectedJsonPath = path.join(os.tmpdir(), "package.json");
 
-                jest.mocked(fs.readFile).mockImplementation((path, options) => {
+                vi.mocked(fs.readFile).mockImplementation((path, options) => {
                     if (typeof path === "string" && path.match("package.json")) {
                         return Promise.resolve(JSON.stringify(fakePackageJson));
                     } else {
@@ -232,9 +249,9 @@ describe(NodeGenerator, () => {
                 });
 
                 const generator = new NodeGenerator(args, logger);
-                await generator.generate();
+                await generator.run();
 
-                expect(jest.mocked(writeJson)).toBeCalledWith(
+                expect(vi.mocked(writeJson)).toBeCalledWith(
                     expectedJsonPath,
                     expect.objectContaining({
                         "node-red": {

@@ -1,9 +1,9 @@
-"use strict";
-import PackageJsonGenerator from "./PackageJsonGenerator";
-import NodeGenerator from "./NodeGenerator";
-import Installer from "./Installer";
-import { printHelp } from "./printHelp";
-import { Logger } from "./Logger";
+import Generator from "./runner.js";
+import PackageJsonGenerator from "./package-json-generator.js";
+import NodeGenerator from "./node-generator.js";
+import Installer from "./installer.js";
+import { printHelp } from "./print-help.js";
+import { Logger } from "./logger.js";
 
 const DefaultLogger = {
     write: (message: string) => process.stdout.write(message)
@@ -14,7 +14,7 @@ export class ExecutionHandler {
     constructor(logger: Logger = DefaultLogger) {
         this.logger = logger;
     }
-    handleArguments(args: string[]): Promise<void> {
+    handleArguments(args: string[]): Generator | undefined {
         const [command, ...argv] = args;
         switch (command) {
             case "generate":
@@ -26,12 +26,12 @@ export class ExecutionHandler {
                 const isHelp = command == "--help" || argv.includes("--help");
                 if (command && !isHelp)
                     this.logger.write(`Invalid command ${command}\n`);
-                return Promise.resolve();
+                return undefined;
             }
         }
     }
 
-    private handleGenerateCommand(args: string[]): Promise<void> {
+    private handleGenerateCommand(args: string[]): Generator | undefined {
         const [subcommand, ...argv] = args;
         switch (subcommand) {
             case "packageJson":
@@ -43,23 +43,20 @@ export class ExecutionHandler {
                 const isHelp = subcommand == "--help" || argv.includes("--help");
                 if (subcommand && !isHelp)
                     this.logger.write(`Invalid subcommand ${subcommand}\n`);
-                return Promise.resolve();
+                return undefined;
             }
         }
     }
 
-    private handlePackageJsonSubcommand(args: string[]): Promise<void> {
-        const generator = new PackageJsonGenerator(args, this.logger);
-        return generator.generate();
+    private handlePackageJsonSubcommand(args: string[]): PackageJsonGenerator {
+        return new PackageJsonGenerator(args, this.logger);
     }
 
-    private handleNodeSubcommand(args: string[]): Promise<void> {
-        const generator = new NodeGenerator(args, this.logger);
-        return generator.generate();
+    private handleNodeSubcommand(args: string[]): NodeGenerator {
+        return new NodeGenerator(args, this.logger);
     }
 
     private handleInstallCommand(_args: string[]) {
-        const installer = new Installer();
-        return installer.install();
+        return new Installer();
     }
 }

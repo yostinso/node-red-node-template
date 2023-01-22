@@ -1,7 +1,7 @@
-import { expect, describe, it } from "@jest/globals";
-import parseArgs from "../generate/parseArgs";
+import { expect, describe, it } from "vitest";
+import parseArgs from "../generate/parse-args.js";
 
-describe(parseArgs, () => {
+describe("parseArgs", () => {
     it("should parse any pairs of arguments", () => {
         const argv = [
             "--one", "one",

@@ -1,7 +1,7 @@
 "use strict";
-import parseArgs from "../parseArgs";
 import { statSync } from "fs";
-import { FieldsOfArgs, PartialArgs as GenericPartialArgs, PartialArgsPlus as GenericPartialArgsPlus } from "./PartialArgs";
+import parseArgs from "../parse-args.js";
+import { FieldsOfArgs, PartialArgs as GenericPartialArgs, PartialArgsPlus as GenericPartialArgsPlus } from "./partial-args.js";
 
 export type PartialArgs = GenericPartialArgs<PackageJsonGeneratorArgs>
 type PartialArgsPlus<K extends keyof PackageJsonGeneratorArgs> = GenericPartialArgsPlus<PackageJsonGeneratorArgs, K>

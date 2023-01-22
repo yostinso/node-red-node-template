@@ -1,17 +1,17 @@
-"use strict";
-import { readPackageTemplates, templateReplaceAll, templateWriteAll, addPathPrefixes } from "./templateHelpers";
 import { spawn } from "child_process";
-import { Logger } from "./Logger";
-import PackageJsonGeneratorArgs, { PartialArgs } from "./args/PackageJsonGeneratorArgs";
+import PackageJsonGeneratorArgs, { PartialArgs } from "./args/package-json-generator-args.js";
+import { Logger } from "./logger.js";
+import Runner from "./runner.js";
+import { addPathPrefixes, readPackageTemplates, templateReplaceAll, templateWriteAll } from "./template-helpers.js";
 
-export default class PackageJsonGenerator {
+export default class PackageJsonGenerator implements Runner {
     logger: Logger;
     args: PackageJsonGeneratorArgs;
     constructor(args: string[] | PartialArgs, logger: Logger) {
         this.logger = logger;
         this.args = new PackageJsonGeneratorArgs(args);
     }
-    async generate(): Promise<void> {
+    async run(): Promise<void> {
         this.logger.write("Generating package.json...\n");
 
         const { packageName, author, githubUsername, githubRepo, fullPackageName } = this.args;

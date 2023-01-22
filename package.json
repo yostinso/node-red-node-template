@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "@yostinso/node-red-node-template",
   "version": "1.0.0",
   "description": "Generator for Node-RED custom nodes that can be developed using TypeScript and ES6 classes instead of bare Javascript.",
