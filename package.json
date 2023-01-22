@@ -10,6 +10,7 @@
     "@typescript-eslint/eslint-plugin": "^5.47.1",
     "@typescript-eslint/parser": "^5.47.1",
     "@vitest/expect": "^0.27.3",
+    "@yostinso/vitest-matchjsonobject": "^1.0.0",
     "eslint": "^8.30.0",
     "typescript": "^4.9.4",
     "vitest": "^0.27.3"

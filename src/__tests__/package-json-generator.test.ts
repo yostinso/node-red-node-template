@@ -1,3 +1,4 @@
+import "@yostinso/vitest-matchjsonobject";
 import * as fs from "fs/promises";
 import * as os from "os";
 import path from "path";
@@ -6,7 +7,6 @@ import PackageJsonGeneratorArgs from "../generate/args/package-json-generator-ar
 import PackageJsonGenerator from "../generate/package-json-generator.js";
 import * as templateHelpersType from "../generate/template-helpers.js";
 import { addPathPrefixes, templateReplaceAll, templateWriteAll } from "../generate/template-helpers.js";
-import "./util.js";
 
 vi.mock("../generate/template-helpers.js", async () => {
     const original = (await vi.importActual("../generate/template-helpers.js")) as typeof templateHelpersType;
@@ -70,7 +70,7 @@ describe("PackageJsonGenerator", () => {
                 fullPackageName: "@custom-scope/custom-full-package-name",
                 githubRepo: "custom-repo",
                 scope: "custom-specific-scope",
-                rootPath: "test/"
+                rootPath: "src/"
             };
             const args = [
                 "--name", "package-name",
@@ -79,7 +79,7 @@ describe("PackageJsonGenerator", () => {
                 "--fullPackageName", "@custom-scope/custom-full-package-name",
                 "--githubRepo", "custom-repo",
                 "--scope", "custom-specific-scope",
-                "--rootPath", "test/"
+                "--rootPath", "src/"
             ];
             const generator = new PackageJsonGenerator(args, logger);
             expect(generator.args).toMatchObject(expected);
