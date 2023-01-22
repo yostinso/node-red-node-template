@@ -1,8 +1,12 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": [ "*.ts", "test/*.ts" ],
+  "include": [ "src/**/*.ts" ],
   "compilerOptions": {
     "strict": true,
-    "outDir": "./dist"
+    "outDir": "js",
+    "rootDir": "src",
+    "module": "esnext",
+    "declaration": true,
+    "sourceMap": true
   },
 }

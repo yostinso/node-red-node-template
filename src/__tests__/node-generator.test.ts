@@ -19,7 +19,6 @@ vi.mock("fs/promises", async () => {
         readFile: vi.fn().mockImplementation(original.readFile)
     };
 });
-const { readFile: _readFile } = (await vi.importActual("fs/promises")) as typeof fs;
 
 let logMessages = "";
 const logger = {
@@ -159,6 +158,7 @@ describe("NodeGenerator", () => {
             });
 
             it("should replace any existing node in package.json if it does exist", async () => {
+                const { readFile: _readFile } = (await vi.importActual("fs/promises")) as typeof fs;
                 const args = {
                     nodeName: "node-name",
                     packageName: "package-name",
@@ -195,6 +195,7 @@ describe("NodeGenerator", () => {
             });
 
             it("should leave any other nodes intact", async () => {
+                const { readFile: _readFile } = (await vi.importActual("fs/promises")) as typeof fs;
                 const args = {
                     nodeName: "node-name",
                     packageName: "package-name",
@@ -232,6 +233,7 @@ describe("NodeGenerator", () => {
             });
 
             it("should populate the node-red and node-red.nodes keys of package.json if missing", async () => {
+                const { readFile: _readFile } = (await vi.importActual("fs/promises")) as typeof fs;
                 const args = {
                     nodeName: "node-name",
                     packageName: "package-name",

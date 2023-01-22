@@ -17,7 +17,6 @@ vi.mock("../generate/template-helpers.js", async () => {
         templateWriteAll: vi.fn()
     };
 });
-const { templateWriteAll: _templateWriteAll } = (await vi.importActual("../generate/template-helpers.js")) as typeof templateHelpersType;
 
 let logMessages = "";
 const logger = {
@@ -176,7 +175,8 @@ describe("PackageJsonGenerator", () => {
         });
 
         describe("when writing isn't mocked", () => {
-            beforeAll(() => {
+            beforeAll(async () => {
+                const { templateWriteAll: _templateWriteAll } = (await vi.importActual("../generate/template-helpers.js")) as typeof templateHelpersType;
                 vi.mocked(templateWriteAll).mockImplementation(_templateWriteAll);
             });
             afterAll(() => {
